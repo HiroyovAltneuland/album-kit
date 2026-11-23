@@ -120,8 +120,13 @@ function render() {
         const colorInput=field(colorControls,'背景色',page.backgroundColor || '#000000',v=>page.backgroundColor=v,{type:'color'});
         for(const [label,value] of [['黒','#000000'],['白','#ffffff']])colorControls.append(button(label,()=>{page.backgroundColor=value;colorInput.value=value;changed();}));
         field(block,'背景の切り替え',page.transition || 'instant',v=>page.transition=v,{options:[['instant','即時'],['fade','フェード'],['crossfade','クロスフェード'],['black','黒を挟む']],hint:'このページへ入るときの背景だけに適用します。同じ背景が続く場合は再演出しません'});
-        field(block,'切り替え時間',String(page.transitionDuration ?? 800),v=>{if(v!=='custom'){page.transitionDuration=Number(v);durationInput.value=v;}},{options:[['300','短い（300ms）'],['800','標準（800ms）'],['1600','長い（1600ms）'],['custom','直接指定']],hint:'「黒を挟む」は暗転と復帰を合わせた時間です'}).value=[300,800,1600].includes(page.transitionDuration ?? 800)?String(page.transitionDuration ?? 800):'custom';
-        const durationInput=field(block,'時間（ミリ秒）',page.transitionDuration ?? 800,v=>page.transitionDuration=Number(v),{type:'number',hint:'0〜10000ms。動きを減らす設定の端末では即時に切り替えます'});
+        const durationPreset=field(block,'切り替え時間',String(page.transitionDuration ?? 800),v=>{
+          customDuration.hidden=v!=='custom';
+          if(v!=='custom'){page.transitionDuration=Number(v);durationInput.value=v;}
+        },{options:[['300','短い（300ms）'],['800','標準（800ms）'],['1600','長い（1600ms）'],['custom','直接指定']],hint:'「黒を挟む」は暗転と復帰を合わせた時間です'});
+        durationPreset.value=[300,800,1600].includes(page.transitionDuration ?? 800)?String(page.transitionDuration ?? 800):'custom';
+        const customDuration=element('div');customDuration.hidden=durationPreset.value!=='custom';block.append(customDuration);
+        const durationInput=field(customDuration,'時間（ミリ秒）',page.transitionDuration ?? 800,v=>page.transitionDuration=Number(v),{type:'number',hint:'0〜10000ms。動きを減らす設定の端末では即時に切り替えます'});
         durationInput.min='0';durationInput.max='10000';durationInput.step='1';
         const pageCropDetails = element('details', {class:'page-crop-settings'});
         pageCropDetails.append(element('summary', {}, 'このページの縦持ち画像位置'));
