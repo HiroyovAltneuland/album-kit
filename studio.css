@@ -44,3 +44,6 @@
 .scenario-compile-panel h2 { font-size: 14px; }
 .scenario-compile-panel p { margin: 8px 0 12px; font-size: 12px; }
 .scenario-compile-panel .hint { margin-bottom: 0; }
+
+.page-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.page-actions button { font-size: 12px; }

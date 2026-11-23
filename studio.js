@@ -7,6 +7,7 @@ let scenarioCompile=null, compiling=false;
 // UI-only state follows chapter objects when reordered; it never enters the album.
 const collapsedChapters = new WeakSet();
 const portraitEditors = new Set();
+const pageTextInputs = new WeakMap();
 const clone=value=>JSON.parse(JSON.stringify(value));
 async function request(url, data, raw=false) {
   const response=await fetch(url,{method:data===undefined?'GET':'POST',headers:{'X-Album-Token':token,...(raw?{}:{'Content-Type':'application/json'})},body:data===undefined?undefined:raw?data:JSON.stringify(data)});
@@ -102,7 +103,7 @@ function render() {
       chapter.pages.forEach((page,pageIndex)=>{
         const block=element('div',{class:'page-editor'});heading(block,'ページ '+(pageIndex+1),chapter.pages,pageIndex);
         field(block,'話者',page.speaker,v=>page.speaker=v);
-        field(block,'本文',page.text,v=>page.text=v,{type:'textarea'});
+        pageTextInputs.set(page,field(block,'本文',page.text,v=>page.text=v,{type:'textarea'}));
         const choices=musicOptions();if(page.bgm && !choices.some(([file])=>file===page.bgm))choices.push([page.bgm,page.bgm+'（原稿指定）']);
         field(block,'BGM',page.bgm || '',v=>page.bgm=v || null,{options:choices});
         field(block,'ページの画像',page.image || '',v=>page.image=v || null,{hint:(config.imageBase || '')+' 以下のファイル名。空欄なら章の画像'});
@@ -124,7 +125,16 @@ function render() {
           pageCropDetails.append(pageCrop.element);
         });
         block.append(pageCropDetails);
-        block.append(button('このページをプレビュー',()=>preview(index,pageIndex)));section.append(block);
+        const pageActions=element('div',{class:'page-actions'});
+        pageActions.append(button('このページをプレビュー',()=>preview(index,pageIndex)));
+        pageActions.append(button('ページを追加',()=>{
+          const inserted={speaker:page.speaker || '',text:'新しいページ',bgm:page.bgm || null};
+          for(const key of ['image','portraitPosition'])if(page[key])inserted[key]=page[key];
+          chapter.pages.splice(pageIndex+1,0,inserted);
+          changed();render();
+          const input=pageTextInputs.get(inserted);input?.focus();input?.select();
+        },{'aria-label':'ページ '+(pageIndex+1)+' の後に追加'}));
+        block.append(pageActions);section.append(block);
       });
       section.append(button('ページを追加',()=>{chapter.pages.push({speaker:'',text:'新しいページ',bgm:null});changed();render();},{class:'add'}));details.append(section);root.append(details);
     });
