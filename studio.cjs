@@ -6,7 +6,7 @@ const crypto = require('node:crypto');
 const {spawn} = require('node:child_process');
 const project = require('./project.cjs');
 const scenarios = require('./build-scenarios.cjs');
-const mime = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.gif':'image/gif','.avif':'image/avif','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.m4a':'audio/mp4','.flac':'audio/flac','.aac':'audio/aac'};
+const mime = {'.svg':'image/svg+xml','.ico':'image/x-icon','.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.gif':'image/gif','.avif':'image/avif','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.m4a':'audio/mp4','.flac':'audio/flac','.aac':'audio/aac'};
 async function body(req,limit) {
   const chunks=[];let size=0;
   for await (const chunk of req) {size+=chunk.length;if(size>limit)throw new Error('ファイルが大きすぎます');chunks.push(chunk);}
@@ -53,7 +53,7 @@ function start(root, options={}) {
           const name=url.searchParams.get('name') || '';
           if(!name || name!==path.basename(name) || /[\\/:\x00-\x1f]/.test(name))throw new Error('ファイル名が不正です');
           const ext=path.extname(name).toLowerCase();
-          if(!mime[ext] || ['.html','.js','.css','.json'].includes(ext))throw new Error('画像か音声ファイルを選んでください');
+          if(!/^\.(png|jpe?g|webp|gif|avif|mp3|wav|ogg|m4a|aac|flac)$/.test(ext))throw new Error('画像か音声ファイルを選んでください');
           const folder=/^\.(png|jpe?g|webp|gif|avif)$/.test(ext)?'image/':'mp3/';
           const file=folder+crypto.randomBytes(4).toString('hex')+'-'+name;
           const absolute=project.local(root,file);
@@ -90,7 +90,9 @@ function start(root, options={}) {
         res.writeHead(200,{'Content-Type':mime['.html']});return res.end(fs.readFileSync(path.join(__dirname,'starter.html')));
       }
       let file;
-      if(url.pathname.startsWith('/preview/album-kit/')) {
+      if(['/branding/favicon.svg','/branding/favicon.ico','/branding/apple-touch-icon.png'].includes(url.pathname)) {
+        file=path.join(__dirname,url.pathname.slice(1));
+      } else if(url.pathname.startsWith('/preview/album-kit/')) {
         const name=url.pathname.slice('/preview/album-kit/'.length);
         if(!project.runtime.includes(name))return json({error:'Not found'},404);
         file=path.join(__dirname,name);

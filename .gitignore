@@ -47,3 +47,8 @@ Thumbs.db
 
 # Work-specific development diary; not part of the reusable library
 /UI-REVIEW.md
+
+# Album Kit's own branding (not album content)
+!/branding/favicon.svg
+!/branding/favicon.ico
+!/branding/apple-touch-icon.png

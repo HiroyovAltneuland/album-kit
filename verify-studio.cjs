@@ -11,6 +11,11 @@ async function main(){
   server=start(root);await once(server,'listening');
   const origin='http://127.0.0.1:'+server.address().port;
   const html=await(await fetch(origin)).text();const token=/name="album-token" content="([^"]+)"/.exec(html)[1];
+  assert(html.includes('href="/branding/favicon.svg"'));
+  const favicon=await fetch(origin+'/branding/favicon.svg');assert.equal(favicon.status,200);assert.equal(favicon.headers.get('content-type'),'image/svg+xml');
+  const icon=await fetch(origin+'/branding/favicon.ico');assert.equal(icon.status,200);const bytes=Buffer.from(await icon.arrayBuffer());assert.equal(bytes.readUInt16LE(2),1);assert.equal(bytes.readUInt16LE(4),3);
+  assert.equal((await fetch(origin+'/branding/apple-touch-icon.png')).status,200);
+  assert.equal((await fetch(origin+'/branding/private.png')).status,404);
   const headers={'X-Album-Token':token,'Content-Type':'application/json','Origin':origin};
   const api=async(route,data)=>{const result=await fetch(origin+'/api/'+route,{method:data===undefined?'GET':'POST',headers,body:data===undefined?undefined:JSON.stringify(data)});const value=await result.json();return {status:result.status,value};};
   assert.equal((await fetch(origin+'/api/project')).status,403);

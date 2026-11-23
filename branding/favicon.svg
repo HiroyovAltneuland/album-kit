@@ -1,0 +1,11 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Album Kit</title>
+  <rect width="64" height="64" rx="12" fill="#edf2f7"/>
+  <g fill="none" stroke="#071124" stroke-width="4" stroke-linecap="square" stroke-linejoin="round">
+    <path d="M7 10h16M7 17h16M7 24h12"/>
+    <path d="M27 17h8v15h8M27 47h8V32"/>
+  </g>
+  <path d="M9 44v6M16 38v18M23 42v10" fill="none" stroke="#0658ff" stroke-width="4" stroke-linecap="round"/>
+  <path d="M43 21l16 11-16 11z" fill="#0658ff"/>
+  <path d="M32 29h6v6h-6z" fill="#0658ff"/>
+</svg>
