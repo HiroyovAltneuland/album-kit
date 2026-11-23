@@ -127,7 +127,7 @@ function render() {
         block.append(pageCropDetails);
         const pageActions=element('div',{class:'page-actions'});
         pageActions.append(button('このページをプレビュー',()=>preview(index,pageIndex)));
-        pageActions.append(button('ページを追加',()=>{
+        pageActions.append(button('後ろにページを追加',()=>{
           const inserted={speaker:page.speaker || '',text:'新しいページ',bgm:page.bgm || null};
           for(const key of ['image','portraitPosition'])if(page[key])inserted[key]=page[key];
           chapter.pages.splice(pageIndex+1,0,inserted);
