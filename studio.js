@@ -3,6 +3,7 @@ const $ = id => document.getElementById(id);
 const token=document.querySelector('meta[name=album-token]').content;
 let config,tab='album',dirty=false,timer,generation=0,pending=Promise.resolve();
 let lastPreview='';
+let scenarioCompile=null, compiling=false;
 // UI-only state follows chapter objects when reordered; it never enters the album.
 const collapsedChapters = new WeakSet();
 const portraitEditors = new Set();
@@ -12,7 +13,7 @@ async function request(url, data, raw=false) {
   const result=await response.json();if(!response.ok)throw new Error(result.error || '操作できませんでした');return result;
 }
 function status(message,error=false){$('status').textContent=message;$('status').classList.toggle('error',error);}
-function changed(){dirty=true;$('save-state').textContent='未保存の変更';$('project-title').textContent=config.title || 'アルバム';clearTimeout(timer);timer=setTimeout(()=>preview(),700);}
+function changed(){dirty=true;updateCompilePanel();$('save-state').textContent='未保存の変更';$('project-title').textContent=config.title || 'アルバム';clearTimeout(timer);timer=setTimeout(()=>preview(),700);}
 function element(tag,attrs={},text) {const node=document.createElement(tag);for(const [key,value]of Object.entries(attrs))node.setAttribute(key,value);if(text!==undefined)node.textContent=text;return node;}
 function button(label,action,attrs={}){const node=element('button',{type:'button',...attrs},label);node.onclick=action;return node;}
 function field(parent,label,value,set,{type='text',hint,options}={}) {
@@ -57,6 +58,7 @@ function render() {
   for (const editor of portraitEditors) editor.destroy();
   portraitEditors.clear();
   const root=$('fields');root.replaceChildren();
+  if(!config){root.append(element('h2',{},'シナリオの準備'),element('p',{},'上のボタンで script/ の原稿を変換すると編集を始められます'));return;}
   if(tab==='album') {
     root.append(element('h2',{},'アルバムの情報'),element('p',{},'最初に届く、タイトルと紹介文'));
     field(root,'タイトル',config.title,v=>config.title=v);
@@ -144,6 +146,7 @@ function render() {
   }
 }
 async function preview(chapter,page) {
+  if(!config || compiling)return;
   clearTimeout(timer);
   const serial=++generation;
   const snapshot=clone(config);
@@ -159,6 +162,7 @@ async function preview(chapter,page) {
   } catch(error){status('プレビュー未更新: '+error.message,true);}
 }
 async function action(kind) {
+  if(!config || compiling)return;
   clearTimeout(timer);++generation;
   $('save').disabled=$('build').disabled=true;
   const snapshot=clone(config);
@@ -166,6 +170,7 @@ async function action(kind) {
     await pending.catch(()=>{});
     status(kind==='build'?'公開用ファイルを作成中…':'保存中…');
     const result=await request('/api/'+kind,snapshot);
+    scenarioCompile={available:false};updateCompilePanel();
     dirty=JSON.stringify(config)!==JSON.stringify(snapshot);$('save-state').textContent=dirty?'未保存の変更':'保存済み';
     if(kind==='build'){$('output-path').textContent=result.folder;$('output-count').textContent=result.files+' ファイルを書き出しました';$('build-result').showModal();status('ビルドが完了しました');}
     else status('制作データを保存しました');
@@ -182,4 +187,37 @@ for (const mode of ['wide', 'narrow', 'landscape']) $(mode).onclick = () => {
   for (const id of ['wide', 'narrow', 'landscape']) $(id).setAttribute('aria-pressed', String(id === mode));
 };
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
-request('/api/project').then(data=>{config=data.config;$('project-title').textContent=config.title;$('project-location').textContent=data.root;$('save-state').textContent='変更なし';render();preview();}).catch(error=>status(error.message,true));
+function updateCompilePanel(){
+  $('scenario-compile-panel').hidden=!scenarioCompile?.available;
+  $('compile-scenarios').disabled=dirty || compiling;
+  $('compile-scenarios').textContent=compiling?'変換中…':'シナリオをコンパイル';
+  $('scenario-compile-info').textContent=dirty?'未保存の編集を保護するため実行できません。現在の内容を保存してください':('script/ の '+(scenarioCompile?.files?.length || 0)+' ファイルを scenarios.js に変換します');
+}
+$('compile-scenarios').onclick=async()=>{
+  if(dirty || compiling || !scenarioCompile?.available)return;
+  clearTimeout(timer);++generation;compiling=true;updateCompilePanel();
+  $('fields').inert=true;document.querySelector('nav').inert=true;
+  $('save').disabled=$('build').disabled=$('refresh').disabled=true;
+  let completionMessage;
+  try{
+    await pending.catch(()=>{});
+    const result=await request('/api/compile-scenarios',{});
+    config=result.config;scenarioCompile=result.scenarioCompile;dirty=result.imported;
+    $('project-title').textContent=config.title;
+    $('save-state').textContent=dirty?'原稿を取り込み済み・未保存':'変更なし';
+    completionMessage=result.imported ? result.count+' ファイルを取り込みました。内容を確認して保存してください' : 'scenarios.js を作成しました。入力済み本文は保持しています。原稿を使う章は作品設定の file で指定してください';
+    render();
+  }catch(error){status(error.message,true);}
+  finally{
+    compiling=false;updateCompilePanel();$('fields').inert=false;document.querySelector('nav').inert=false;
+    $('save').disabled=$('build').disabled=$('refresh').disabled=!config;
+    if(config)await preview();
+    if(completionMessage)status(completionMessage);
+  }
+};
+request('/api/project').then(data=>{
+  config=data.config;scenarioCompile=data.scenarioCompile;
+  $('project-title').textContent=config?.title || 'シナリオの準備';$('project-location').textContent=data.root;$('save-state').textContent='変更なし';
+  $('save').disabled=$('build').disabled=$('refresh').disabled=!config;
+  updateCompilePanel();render();if(config)preview();else status('script/ の原稿をコンパイルしてください');
+}).catch(error=>status(error.message,true));

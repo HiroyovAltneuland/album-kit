@@ -5,6 +5,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const {spawn} = require('node:child_process');
 const project = require('./project.cjs');
+const scenarios = require('./build-scenarios.cjs');
 const mime = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp','.gif':'image/gif','.avif':'image/avif','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.m4a':'audio/mp4','.flac':'audio/flac','.aac':'audio/aac'};
 async function body(req,limit) {
   const chunks=[];let size=0;
@@ -13,7 +14,15 @@ async function body(req,limit) {
 }
 function start(root, options={}) {
   root=fs.realpathSync(root);
-  let draft=project.load(root);
+  let draft, startupError;
+  try { draft=project.load(root); }
+  catch(error) {
+    if (!scenarios.availability(root).available) throw error;
+    draft=null;startupError=error.message;
+  }
+  let baseline=JSON.stringify(draft), draftChanged=false;
+  const sourceConfigFile=path.join(root,'album.config.js');
+  const originalConfig=fs.existsSync(sourceConfigFile)?fs.readFileSync(sourceConfigFile,'utf8'):null;
   const token=crypto.randomBytes(24).toString('hex');
   let origin;
   const server=http.createServer(async(req,res)=>{
@@ -23,7 +32,23 @@ function start(root, options={}) {
       const url=new URL(req.url,origin);
       if (url.pathname.startsWith('/api/')) {
         if(req.headers['x-album-token']!==token || (req.headers.origin && req.headers.origin!==origin))return json({error:'この制作画面から操作してください'},403);
-        if(req.method==='GET' && url.pathname==='/api/project')return json({config:draft,root});
+        if(req.method==='GET' && url.pathname==='/api/project')return json({config:draft,root,scenarioCompile:scenarios.availability(root),startupError});
+        if(req.method==='POST' && url.pathname==='/api/compile-scenarios') {
+          await body(req,1024);
+          const state=scenarios.availability(root);
+          if(!state.available)return json({error:state.reason},409);
+          if(draftChanged)return json({error:'編集中のデータを保護するため変換できません。現在の内容を保存してください'},409);
+          const currentConfig=fs.existsSync(sourceConfigFile)?fs.readFileSync(sourceConfigFile,'utf8'):null;
+          if(currentConfig!==originalConfig)return json({error:'作品設定が変更されています。制作室を起動し直してください'},409);
+          const sources=scenarios.readSources(root);
+          // Parse and validate before creating the only output; never change JSON or config.
+          const imported=project.load(root,{scenarioSources:sources});
+          project.check(imported);
+          const changed=JSON.stringify(imported)!==baseline;
+          const count=scenarios.writeSources(root,sources,{exclusive:true});
+          draft=imported;baseline=JSON.stringify(draft);startupError=undefined;
+          return json({config:draft,count,imported:changed,scenarioCompile:scenarios.availability(root)});
+        }
         if(req.method==='POST' && url.pathname==='/api/asset') {
           const name=url.searchParams.get('name') || '';
           if(!name || name!==path.basename(name) || /[\\/:\x00-\x1f]/.test(name))throw new Error('ファイル名が不正です');
@@ -37,9 +62,11 @@ function start(root, options={}) {
           return json({path:file,file:path.basename(file)});
         }
         if(req.method==='POST' && ['/api/preview','/api/save','/api/build'].includes(url.pathname)) {
+          if(!draft)return json({error:'先にシナリオをコンパイルしてください'},409);
           const config=JSON.parse((await body(req,8*1024*1024)).toString());project.check(config);
           // Validate paths before allowing them into the preview.
           for(const file of project.assets(config))project.local(root,file);
+          draftChanged ||= JSON.stringify(config)!==baseline;
           draft=config;
           if(url.pathname==='/api/save'){project.save(root,config);return json({saved:true});}
           if(url.pathname==='/api/build'){const result=project.build(root,config);project.save(root,config);return json(result);}
@@ -55,6 +82,7 @@ function start(root, options={}) {
         const html=fs.readFileSync(path.join(__dirname,'studio.html'),'utf8').replace('__ALBUM_TOKEN__',token);
         res.writeHead(200,{'Content-Type':mime['.html']});return res.end(html);
       }
+      if(url.pathname.startsWith('/preview/') && !draft)return json({error:'シナリオのコンパイル待ちです'},409);
       if(url.pathname==='/preview/album.config.js') {
         res.writeHead(200,{'Content-Type':mime['.js']});return res.end('window.ALBUM_PREVIEW = true; window.ALBUM_CONFIG = '+JSON.stringify({...draft,id:draft.id+'-preview'})+';');
       }

@@ -15,13 +15,14 @@ function local(root, value) {
   for (const segment of relative.split(path.sep)) { part = path.join(part,segment); if (fs.existsSync(part) && fs.lstatSync(part).isSymbolicLink()) throw new Error('リンクされた素材は使用できません'); }
   return absolute;
 }
-function load(root) {
+function load(root, {scenarioSources} = {}) {
   const json = path.join(root,'album.project.json');
   if (fs.existsSync(json)) return JSON.parse(fs.readFileSync(json,'utf8').replace(/^\uFEFF/,''));
   const context = {window:{}};
   vm.createContext(context);
   for (const file of ['album.config.js','scenarios.js']) if (fs.existsSync(path.join(root,file))) vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),context,{timeout:1000});
   const config = JSON.parse(JSON.stringify(context.window.ALBUM_CONFIG));
+  if (scenarioSources) context.window.SCENARIO_SOURCES = scenarioSources;
   validate(config,context.window.SCENARIO_SOURCES);
   config.chapters = config.chapters.map(chapter => {
     const item = {...chapter,pages:chapter.pages || parseScenario(context.window.SCENARIO_SOURCES[chapter.file],config.speakers)};

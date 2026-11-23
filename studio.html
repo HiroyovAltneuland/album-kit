@@ -5,6 +5,7 @@
 <div class="workspace">
 <aside class="editor"><div class="project-heading"><span class="kicker">編集中のアルバム</span><h1 id="project-title">アルバム</h1></div>
 <nav aria-label="編集する項目"><button data-tab="album" aria-current="page">01 <span>アルバム</span></button><button data-tab="tracks">02 <span>楽曲</span></button><button data-tab="story">03 <span>本文・シナリオ</span></button><button data-tab="design">04 <span>配色・書体</span></button><button data-tab="publish">05 <span>ビルド・公開</span></button></nav>
+<section id="scenario-compile-panel" class="scenario-compile-panel" hidden><h2>シナリオ原稿を検出しました</h2><p id="scenario-compile-info"></p><button id="compile-scenarios" type="button">シナリオをコンパイル</button><p class="hint">原稿・作品設定・入力済み本文は上書きしません。保存済みデータや未保存の編集がある場合は実行できません。</p></section>
 <form id="form" autocomplete="off"><div id="fields"></div></form></aside>
 <main class="preview-pane"><div class="preview-heading"><div><h2>プレビュー</h2><p>編集内容を、公開時と同じプレイヤーで確認</p></div><div class="view-controls"><button id="wide" aria-pressed="true">横幅いっぱい</button><button id="narrow" aria-pressed="false">縦持ち</button><button id="landscape" aria-pressed="false">横持ち</button><button id="refresh">再読込</button></div></div><div id="preview-stage"><iframe id="preview" title="公開アルバムのプレビュー" src="about:blank"></iframe></div><div class="preview-footer"><span id="project-location"></span><span>音声はプレビュー内の再生ボタンから</span></div></main>
 </div>

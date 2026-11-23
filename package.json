@@ -8,6 +8,6 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "node verify-crop.cjs && node verify-player.cjs && node verify-studio.cjs && node verify-release.cjs"
+    "test": "node verify-crop.cjs && node verify-player.cjs && node verify-studio.cjs && node verify-release.cjs && node verify-scenarios.cjs"
   }
 }
