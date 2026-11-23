@@ -24,6 +24,19 @@ async function main(){
   const sourceOriginal=fs.readFileSync(path.join(root,'album.config.js'),'utf8');
   const imported=await fetch(origin+'/api/asset?name='+encodeURIComponent('日本語 audio.mp3'),{method:'POST',headers:{'X-Album-Token':token,Origin:origin},body:Buffer.from('audio-fixture')});
   const asset=await imported.json();assert.equal(imported.status,200);
+  const imageDir=path.join(root,'image');fs.mkdirSync(imageDir);
+  fs.writeFileSync(path.join(imageDir,'existing.png'),'image-fixture');
+  const uploadImage=async(name,content)=>{
+    const response=await fetch(origin+'/api/asset?name='+encodeURIComponent(name),{method:'POST',headers:{'X-Album-Token':token,Origin:origin},body:Buffer.from(content)});
+    assert.equal(response.status,200);return response.json();
+  };
+  const reused=await uploadImage('renamed.png','image-fixture');
+  assert.equal(reused.path,'image/existing.png');assert.equal(reused.reused,true);
+  const different=await uploadImage('existing.png','other-fixture');
+  assert.notEqual(different.path,reused.path);
+  assert.equal((await uploadImage('again.png','other-fixture')).path,different.path);
+  assert.equal(fs.readdirSync(imageDir).length,2,'Identical image uploads must not create more files');
+  assert.equal(fs.readFileSync(path.join(imageDir,'existing.png'),'utf8'),'image-fixture');
   config.tracks=[{file:asset.file,title:'試聴曲'}];
   config.title='編集したアルバム';
   assert.equal((await api('preview',config)).status,200);

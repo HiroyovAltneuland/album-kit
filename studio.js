@@ -26,7 +26,7 @@ function field(parent,label,value,set,{type='text',hint,options}={}) {
 }
 async function upload(accept, done) {
   const input=element('input',{type:'file',accept});document.body.append(input);
-  input.onchange=async()=>{const file=input.files[0];if(!file)return;try{status('素材を取り込み中…');const result=await request('/api/asset?name='+encodeURIComponent(file.name),file,true);done(result);changed();render();status('素材を取り込みました');}catch(error){status(error.message,true);}finally{input.remove();}};
+  input.onchange=async()=>{const file=input.files[0];if(!file)return;try{status('素材を取り込み中…');const result=await request('/api/asset?name='+encodeURIComponent(file.name),file,true);done(result);changed();render();status(result.reused?'同じ画像があるため既存ファイルを使いました':'素材を取り込みました');}catch(error){status(error.message,true);}finally{input.remove();}};
   input.oncancel=()=>input.remove();input.click();
 }
 function imageField(parent,label,obj,key) {
