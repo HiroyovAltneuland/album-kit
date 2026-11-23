@@ -187,6 +187,17 @@
 .kit-credit a:hover { color: var(--ink); }
 .kit-credit a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
 
+/* Color scenes share the portrait square and leave the text UI untouched. */
+.reading-area { position: relative; isolation: isolate; }
+.playing.solid-scene .backdrop {
+  background: var(--scene-color);
+  filter: none;
+  transform: none;
+}
+.playing.solid-scene .reading-area {
+  background: var(--scene-color);
+}
+
 /* Desktop chapter artwork alignment is independent from portrait cropping. */
 @media (min-width: 751px) and (min-height: 501px), (min-width: 1101px) {
   .playing .backdrop { background-position: center, var(--desktop-scene-position, center); }

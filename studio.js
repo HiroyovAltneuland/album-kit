@@ -106,8 +106,23 @@ function render() {
         pageTextInputs.set(page,field(block,'本文',page.text,v=>page.text=v,{type:'textarea'}));
         const choices=musicOptions();if(page.bgm && !choices.some(([file])=>file===page.bgm))choices.push([page.bgm,page.bgm+'（原稿指定）']);
         field(block,'BGM',page.bgm || '',v=>page.bgm=v || null,{options:choices});
-        field(block,'ページの画像',page.image || '',v=>page.image=v || null,{hint:(config.imageBase || '')+' 以下のファイル名。空欄なら章の画像'});
-        block.append(button('ページ画像を選ぶ',()=>upload('image/png,image/jpeg,image/webp,image/gif,image/avif',result=>page.image=pageImagePath(result))));
+        field(block,'ページの背景',page.backgroundColor?'color':page.image?'image':'chapter',v=>{
+          if(v==='color'){page.backgroundColor='#000000';delete page.image;}
+          else {delete page.backgroundColor;if(v==='chapter')delete page.image;}
+          if(v!=='image')imageInput.value='';
+          // Keep the image controls visible when the author first selects Image.
+          backgroundFields(v);
+        },{options:[['chapter','章の画像'],['image','画像'],['color','単色']]});
+        const imageControls=element('div'),colorControls=element('div');
+        block.append(imageControls,colorControls);
+        const imageInput=field(imageControls,'ページの画像',page.image || '',v=>{page.image=v || null;delete page.backgroundColor;},{hint:(config.imageBase || '')+' 以下のファイル名。空欄なら章の画像'});
+        imageControls.append(button('ページ画像を選ぶ',()=>upload('image/png,image/jpeg,image/webp,image/gif,image/avif',result=>{page.image=pageImagePath(result);delete page.backgroundColor;})));
+        const colorInput=field(colorControls,'背景色',page.backgroundColor || '#000000',v=>page.backgroundColor=v,{type:'color'});
+        for(const [label,value] of [['黒','#000000'],['白','#ffffff']])colorControls.append(button(label,()=>{page.backgroundColor=value;colorInput.value=value;changed();}));
+        field(block,'背景の切り替え',page.transition || 'instant',v=>page.transition=v,{options:[['instant','即時'],['fade','フェード'],['crossfade','クロスフェード'],['black','黒を挟む']],hint:'このページへ入るときの背景だけに適用します。同じ背景が続く場合は再演出しません'});
+        field(block,'切り替え時間',String(page.transitionDuration ?? 800),v=>{if(v!=='custom'){page.transitionDuration=Number(v);durationInput.value=v;}},{options:[['300','短い（300ms）'],['800','標準（800ms）'],['1600','長い（1600ms）'],['custom','直接指定']],hint:'「黒を挟む」は暗転と復帰を合わせた時間です'}).value=[300,800,1600].includes(page.transitionDuration ?? 800)?String(page.transitionDuration ?? 800):'custom';
+        const durationInput=field(block,'時間（ミリ秒）',page.transitionDuration ?? 800,v=>page.transitionDuration=Number(v),{type:'number',hint:'0〜10000ms。動きを減らす設定の端末では即時に切り替えます'});
+        durationInput.min='0';durationInput.max='10000';durationInput.step='1';
         const pageCropDetails = element('details', {class:'page-crop-settings'});
         pageCropDetails.append(element('summary', {}, 'このページの縦持ち画像位置'));
         pageCropDetails.append(element('p', {class:'hint'}, 'ページ画像もここで調整できます。位置の指定がなければ章の設定を引き継ぎます'));
@@ -125,11 +140,13 @@ function render() {
           pageCropDetails.append(pageCrop.element);
         });
         block.append(pageCropDetails);
+        function backgroundFields(mode){imageControls.hidden=mode!=='image';colorControls.hidden=mode!=='color';pageCropDetails.hidden=mode==='color';}
+        backgroundFields(page.backgroundColor?'color':page.image?'image':'chapter');
         const pageActions=element('div',{class:'page-actions'});
         pageActions.append(button('このページをプレビュー',()=>preview(index,pageIndex)));
         pageActions.append(button('後ろにページを追加',()=>{
           const inserted={speaker:page.speaker || '',text:'新しいページ',bgm:page.bgm || null};
-          for(const key of ['image','portraitPosition'])if(page[key])inserted[key]=page[key];
+          for(const key of ['image','portraitPosition','backgroundColor'])if(page[key])inserted[key]=page[key];
           chapter.pages.splice(pageIndex+1,0,inserted);
           changed();render();
           const input=pageTextInputs.get(inserted);input?.focus();input?.select();

@@ -3,10 +3,15 @@
   function parseScenario(source, speakerNames = []) {
     const tagged = /^#/m.test(source);
     const names = new Set(speakerNames);
-    let speaker = '', buffer = '', bgm = null, image = null;
+    let speaker = '', buffer = '', bgm = null, image = null, backgroundColor, transition, transitionDuration;
     const pages = [];
     function flush() {
-      if (buffer.trim()) pages.push({ speaker, text: buffer.trim(), bgm, image });
+      if (buffer.trim()) {
+        pages.push({ speaker, text: buffer.trim(), bgm, image,
+          ...(backgroundColor ? {backgroundColor} : {}),
+          ...(transition ? {transition,transitionDuration} : {}) });
+        transition = undefined; transitionDuration = undefined;
+      }
       buffer = '';
     }
     for (const raw of source.replace(/\r/g, '').split('\n')) {
@@ -23,7 +28,16 @@
           const storage = /storage="([^"]+)"/.exec(part)?.[1];
           if (/^\[playbgm\b/.test(part)) bgm = storage;
           if (/^\[stopbgm\b/.test(part)) bgm = null;
-          if (/^\[image\b/.test(part)) image = storage;
+          if (/^\[(image|bg)\b/.test(part)) {
+            const color = /color="([^"]+)"/.exec(part)?.[1];
+            if (color !== undefined) {
+              backgroundColor = color === 'black' ? '#000000' : color === 'white' ? '#ffffff' : color;
+              image = null;
+            } else { image = storage || null; backgroundColor = undefined; }
+            transition = /effect="([^"]+)"/.exec(part)?.[1] || 'instant';
+            const time = /time="([^"]+)"/.exec(part)?.[1];
+            transitionDuration = time === undefined ? 800 : Number(time);
+          }
         } else buffer += part;
       }
       if (tagged) { if (buffer) buffer += '\n'; }
@@ -128,14 +142,58 @@
     }
     if (track && enabled) audio.play().catch(() => { $('music-status').textContent = '再生できませんでした。音源を確認して再生を押してください。'; });
   }
+  let sceneKey = null, finishScene = () => {};
+  function changeScene(key, apply, effect, duration) {
+    finishScene();
+    if (key === sceneKey) { apply(); return; }
+    const animate = sceneKey !== null && effect !== 'instant' && duration > 0 &&
+      typeof getComputedStyle === 'function' && typeof document.createElement('div').animate === 'function' &&
+      !(typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches);
+    sceneKey = key;
+    if (!animate) { apply(); return; }
+    const layers = [];
+    const surfaces = [document.querySelector('.backdrop'), $('reading-area')];
+    for (const surface of surfaces) {
+      const computed = getComputedStyle(surface);
+      const layer = document.createElement('div');
+      layer.setAttribute('aria-hidden','true');
+      Object.assign(layer.style, {position:'absolute',inset:'0',pointerEvents:'none',
+        background:effect === 'black' ? '#000' : computed.background,
+        borderRadius:computed.borderRadius});
+      if (surface === surfaces[0]) {
+        Object.assign(layer.style,{top:computed.top,zIndex:'-1',
+          filter:effect === 'black' ? 'none' : computed.filter,transform:computed.transform});
+        $('game').append(layer);
+      } else { layer.style.zIndex='1';surface.append(layer); }
+      layers.push(layer);
+    }
+    let animations = [], finished = false;
+    const clean = () => { animations.forEach(a=>a.cancel());layers.forEach(layer=>layer.remove()); };
+    finishScene = () => { if(finished)return;finished=true;apply();clean(); };
+    const run = (from,to,time) => {
+      animations=layers.map(layer=>layer.animate([{opacity:from},{opacity:to}],{duration:time,fill:'forwards',easing:'ease-in-out'}));
+      return Promise.all(animations.map(a=>a.finished));
+    };
+    if(effect === 'black') {
+      run(0,1,duration/2).then(()=>{if(finished)return;apply();return run(1,0,duration/2);}).then(()=>{if(!finished)finishScene();}).catch(()=>{});
+    } else {
+      apply();run(1,0,duration).then(()=>{if(!finished)finishScene();}).catch(()=>{});
+    }
+  }
   function render() {
     const chapter = chapters[current], item = chapter.pages[page];
     const background = item.image ? (config.imageBase || '') + item.image : chapterImage(current);
     // CSS is served from album-kit/: resolve images against the HTML, not the stylesheet.
-    $('game').style.setProperty('--scene-image', background ? `url(${JSON.stringify(new URL(background, document.baseURI).href)})` : 'none');
+    const color = item.backgroundColor || '';
+    const apply = () => {
+    $('game').style.setProperty('--scene-image', color ? 'none' : background ? `url(${JSON.stringify(new URL(background, document.baseURI).href)})` : 'none');
+    $('game').style.setProperty('--scene-color', color || 'transparent');
+    $('game').classList.toggle('solid-scene', Boolean(color));
     $('game').style.setProperty('--desktop-scene-position', chapter.desktopPosition === 'top' ? 'center top' : 'center center');
     $('game').style.setProperty('--portrait-focus', item.portraitPosition || chapter.portraitPosition || chapter.crop || 'center');
-    $('reading-area').hidden = !background;
+    $('reading-area').hidden = !color && !background;
+    };
+    changeScene(JSON.stringify([current,color || background,item.portraitPosition || chapter.portraitPosition,chapter.desktopPosition]),apply,item.transition || 'instant',item.transitionDuration ?? 800);
     $('chapter-title').textContent = chapter.act + '：' + chapter.title;
     $('page-count').textContent = `${page + 1} / ${chapter.pages.length}`;
     $('speaker').textContent = item.speaker;
@@ -147,11 +205,13 @@
     playTrack(item.bgm);
   }
   function start(index) {
+    finishScene(); sceneKey = null;
     current = index; page = 0;
     $('menu').hidden = true; $('reader').hidden = false; $('menu-button').hidden = false;
     $('game').classList.add('playing'); render(); $('next').focus();
   }
   function menu() {
+    finishScene(); sceneKey = null;
     current = -1; playTrack(null);
     $('music-status').textContent = '';
     $('menu').hidden = false; $('reader').hidden = true; $('menu-button').hidden = true;

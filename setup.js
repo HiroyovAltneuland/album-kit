@@ -27,6 +27,11 @@
       if (chapter.desktopPosition !== undefined && !['center','top'].includes(chapter.desktopPosition)) throw new Error('PCの背景画像位置は center または top で指定してください');
       if (chapter.pages) {
         if (!Array.isArray(chapter.pages) || !chapter.pages.length || chapter.pages.some(p => typeof p.text !== 'string' || !p.text.trim())) throw new Error('pages に本文を指定してください');
+        for (const page of chapter.pages) {
+          if (page.backgroundColor !== undefined && !/^#[0-9a-f]{6}$/i.test(page.backgroundColor)) throw new Error('背景色は #RRGGBB で指定してください');
+          if (page.transition !== undefined && !['instant','fade','crossfade','black'].includes(page.transition)) throw new Error('背景の切り替えは instant / fade / crossfade / black で指定してください');
+          if (page.transitionDuration !== undefined && (!Number.isInteger(page.transitionDuration) || page.transitionDuration < 0 || page.transitionDuration > 10000)) throw new Error('切り替え時間は0〜10000ミリ秒で指定してください');
+        }
       } else if (typeof sources[chapter.file] !== 'string' || !sources[chapter.file].trim()) throw new Error('シナリオがありません: ' + chapter.file);
     }
     if (config.colors && (!Array.isArray(config.colors) || config.colors.length !== 4 || config.colors.some(c => !/^#[0-9a-f]{6}$/i.test(c)))) throw new Error('colors は #RRGGBB の4色で指定してください');
