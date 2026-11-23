@@ -1,0 +1,49 @@
+﻿# Album projects and unpublished content
+/image/
+/images/
+/mp3/
+/wav/
+/script/
+/dist/
+/releases/
+**/album.project.json
+**/album.project.json.tmp
+**/album.config.js
+**/scenarios.js
+*.[kK][sS]
+
+# Media and authoring files, regardless of folder
+*.[pP][nN][gG]
+*.[jJ][pP][gG]
+*.[jJ][pP][eE][gG]
+*.[wW][eE][bB][pP]
+*.[gG][iI][fF]
+*.[aA][vV][iI][fF]
+*.[sS][vV][gG]
+*.[mM][pP]3
+*.[wW][aA][vV]
+*.[oO][gG][gG]
+*.[mM]4[aA]
+*.[aA][aA][cC]
+*.[fF][lL][aA][cC]
+*.[mM][pP]4
+*.[mM][oO][vV]
+*.[pP][sS][dD]
+*.[aA][iI]
+*.[zZ][iI][pP]
+
+# Dependencies, credentials and local state
+node_modules/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Work-specific development diary; not part of the reusable library
+/UI-REVIEW.md

@@ -1,0 +1,13 @@
+{
+  "name": "album-kit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline-first music album editor, story reader and static-site builder",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node verify-crop.cjs && node verify-player.cjs && node verify-studio.cjs && node verify-release.cjs"
+  }
+}

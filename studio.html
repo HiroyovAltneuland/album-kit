@@ -1,0 +1,13 @@
+﻿<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="album-token" content="__ALBUM_TOKEN__"><title>Album Kit — 制作室</title><link rel="stylesheet" href="/studio.css"><script src="/crop-editor.js" defer></script><script src="/studio.js" defer></script></head>
+<body>
+<header class="topbar"><div class="wordmark">Album Kit <span>制作室</span></div><div class="top-actions"><span id="save-state">読み込み中</span><button id="save">保存</button><button id="build" class="primary">公開用にビルド</button></div></header>
+<div class="workspace">
+<aside class="editor"><div class="project-heading"><span class="kicker">編集中のアルバム</span><h1 id="project-title">アルバム</h1></div>
+<nav aria-label="編集する項目"><button data-tab="album" aria-current="page">01 <span>アルバム</span></button><button data-tab="tracks">02 <span>楽曲</span></button><button data-tab="story">03 <span>本文・シナリオ</span></button><button data-tab="design">04 <span>配色・書体</span></button><button data-tab="publish">05 <span>ビルド・公開</span></button></nav>
+<form id="form" autocomplete="off"><div id="fields"></div></form></aside>
+<main class="preview-pane"><div class="preview-heading"><div><h2>プレビュー</h2><p>編集内容を、公開時と同じプレイヤーで確認</p></div><div class="view-controls"><button id="wide" aria-pressed="true">横幅いっぱい</button><button id="narrow" aria-pressed="false">縦持ち</button><button id="landscape" aria-pressed="false">横持ち</button><button id="refresh">再読込</button></div></div><div id="preview-stage"><iframe id="preview" title="公開アルバムのプレビュー" src="about:blank"></iframe></div><div class="preview-footer"><span id="project-location"></span><span>音声はプレビュー内の再生ボタンから</span></div></main>
+</div>
+<div class="statusbar"><span id="status" role="status" aria-live="polite">制作データを読み込んでいます</span></div>
+<dialog id="build-result" aria-labelledby="build-title"><p class="kicker">ビルド完了</p><h2 id="build-title">公開するファイルが揃いました</h2><p>以下のフォルダ内のファイルをすべて、公開先の同じ階層へアップロードしてください</p><code id="output-path"></code><p id="output-count"></p><p>アップロード後、公開URLで試聴と画像表示を確認してください</p><button id="close-result" class="primary">編集に戻る</button></dialog>
+</body></html>
