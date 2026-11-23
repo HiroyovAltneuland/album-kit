@@ -49,7 +49,9 @@ async function main(){
  const legacy=fs.mkdtempSync(path.join(os.tmpdir(),'album-studio-legacy-'));
  try {
   fs.writeFileSync(path.join(legacy,'album.config.js'),"window.ALBUM_CONFIG={id:'legacy',title:'Sample',tracks:[],speakers:['Artist'],chapters:[{title:'Notes',file:'01.ks'}]};");
-  fs.writeFileSync(path.join(legacy,'scenarios.js'),'window.SCENARIO_SOURCES = '+JSON.stringify({'01.ks':'#Artist\nSample liner notes.[p]\nAnother page.'})+';');
+  fs.mkdirSync(path.join(legacy,'script'));
+  fs.writeFileSync(path.join(legacy,'script','01.ks'),'\uFEFF#Artist\nSample liner notes.[p]\nAnother page.');
+  assert.equal(require('./build-scenarios.cjs').compile(legacy),1);
   const loaded=project.load(legacy);assert.equal(loaded.chapters.length,1);assert.equal(loaded.chapters[0].pages.length,2);assert.equal(loaded.chapters[0].pages[0].speaker,'Artist');
   console.log('PASS: legacy scenario import using an independent fixture.');
  } finally { assert(path.resolve(legacy).startsWith(path.join(os.tmpdir(),'album-studio-legacy-')));fs.rmSync(legacy,{recursive:true,force:true}); }

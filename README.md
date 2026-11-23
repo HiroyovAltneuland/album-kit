@@ -63,3 +63,5 @@ npm test
 ## ライセンス
 
 システムと独自ドキュメントは [MIT](LICENSE)。生成した公開用サイトにもライセンス文を同梱します。作品の音源・画像・原稿等にMITが自動適用されることはありません。出典は [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) にまとめています。
+
+`.ks` 原稿の配置、TyranoScript風の記法、対応タグと取り込み方法は [制作手順の .ks 原稿](WORKFLOW.md#ks-原稿を使う場合) を参照してください。

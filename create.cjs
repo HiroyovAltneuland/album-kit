@@ -14,6 +14,7 @@ function create(target) {
   } });
   fs.mkdirSync(path.join(destination, 'mp3'));
   fs.mkdirSync(path.join(destination, 'image'));
+  fs.mkdirSync(path.join(destination, 'script'));
   fs.copyFileSync(path.join(__dirname, 'starter.html'), path.join(destination, 'index.html'));
   const config = {id: 'album-' + require('node:crypto').randomUUID(), title:'New Album', brand:'Artist / New Album', description:'ここにアルバムの紹介を書きます。', theme:'ocean', font:'mincho', audioBase:'mp3/', imageBase:'image/', speakers:[], tracks:[], chapters:[{act:'01',title:'ライナーノーツ',pages:[{speaker:'',text:'ここに本文を書きます。',bgm:null}]}]};
   fs.writeFileSync(path.join(destination, 'album.config.js'), 'window.ALBUM_CONFIG = ' + JSON.stringify(config, null, 2) + ';\n');
