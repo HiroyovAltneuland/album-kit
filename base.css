@@ -186,3 +186,8 @@
 .kit-credit a { display: inline-block; padding-block: 8px; color: var(--muted); text-underline-offset: 3px; }
 .kit-credit a:hover { color: var(--ink); }
 .kit-credit a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+
+/* Desktop chapter artwork alignment is independent from portrait cropping. */
+@media (min-width: 751px) and (min-height: 501px), (min-width: 1101px) {
+  .playing .backdrop { background-position: center, var(--desktop-scene-position, center); }
+}

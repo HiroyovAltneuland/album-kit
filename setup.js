@@ -24,6 +24,7 @@
     }
     for (const chapter of config.chapters) {
       if (!chapter.title) throw new Error('章の title が必要です');
+      if (chapter.desktopPosition !== undefined && !['center','top'].includes(chapter.desktopPosition)) throw new Error('PCの背景画像位置は center または top で指定してください');
       if (chapter.pages) {
         if (!Array.isArray(chapter.pages) || !chapter.pages.length || chapter.pages.some(p => typeof p.text !== 'string' || !p.text.trim())) throw new Error('pages に本文を指定してください');
       } else if (typeof sources[chapter.file] !== 'string' || !sources[chapter.file].trim()) throw new Error('シナリオがありません: ' + chapter.file);

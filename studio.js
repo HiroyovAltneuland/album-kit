@@ -96,6 +96,7 @@ function render() {
       });
       const section=element('div',{class:'chapter-body'});heading(section,'章の操作',config.chapters,index);
       field(section,'章番号・見出し',chapter.act,v=>chapter.act=v);field(section,'章タイトル',chapter.title,v=>{chapter.title=v;title.textContent=String(index+1).padStart(2,'0')+' '+v;});imageField(section,'章の背景画像',chapter,'image');
+      field(section,'PCの背景画像位置',chapter.desktopPosition || 'center',v=>chapter.desktopPosition=v,{options:[['center','中央ぞろえ'],['top','上ぞろえ']],hint:'PCで幕を表示するときの位置です。縦持ちの切り抜き位置とは別に設定します'});
       const crop = AlbumCropEditor.create({chapter,cover:config.cover,onChange:changed});
       portraitEditors.add(crop);section.append(crop.element);
       chapter.pages.forEach((page,pageIndex)=>{
