@@ -52,7 +52,32 @@
     return Math.floor(whole / 60) + ':' + String(whole % 60).padStart(2, '0');
   }
   function updateSeek() {
-    const duration = track && Number.isFini…402 tokens truncated…返す' : '曲が終わったら次の曲へ';
+    const duration = track && Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 0;
+    const position = duration ? Math.min(Math.max(audio.currentTime || 0, 0), duration) : 0;
+    $('music-seek').disabled = !duration;
+    $('music-seek').max = String(duration);
+    $('music-seek').value = String(position);
+    $('music-seek').setAttribute('aria-valuetext', formatTime(position) + ' / ' + formatTime(duration));
+    $('music-elapsed').textContent = formatTime(position);
+    $('music-duration').textContent = formatTime(duration);
+  }
+  for (const event of ['loadedmetadata', 'durationchange', 'timeupdate', 'emptied']) audio.addEventListener(event, updateSeek);
+  $('music-seek').addEventListener('input', event => {
+    if (!track || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
+    const position = Number(event.target.value);
+    if (!Number.isFinite(position)) return;
+    audio.currentTime = Math.min(Math.max(position, 0), audio.duration);
+    updateSeek();
+  });
+  const musicFiles = config.tracks.map(track => track.file);
+  function musicStatus() {
+    $('music-status').textContent = '再生中：' + (config.tracks.find(item => item.file === track)?.title || track);
+  }
+  $('music-mode').addEventListener('click', () => {
+    loopMusic = !loopMusic;
+    $('music-mode').setAttribute('aria-pressed', String(loopMusic));
+    $('music-mode').title = loopMusic ? 'リピートをオフにする（現在はこの曲を繰り返す）' : 'リピートをオンにする（現在は次の曲へ）';
+    $('music-mode-status').textContent = loopMusic ? 'この曲を繰り返す' : '曲が終わったら次の曲へ';
     if (current < 0) audio.loop = loopMusic;
   });
   audio.addEventListener('ended', () => {
