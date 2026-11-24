@@ -47,3 +47,27 @@
 
 .page-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .page-actions button { font-size: 12px; }
+
+.row-actions { flex-shrink: 0; }
+.row-actions .icon-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+}
+.icon-action svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+@media (pointer: coarse) {
+  .row-actions .icon-action { width: 44px; height: 44px; min-height: 44px; }
+}

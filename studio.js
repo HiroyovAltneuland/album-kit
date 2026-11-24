@@ -34,9 +34,17 @@ function imageField(parent,label,obj,key) {
   parent.append(button('画像ファイルを選ぶ',()=>upload('image/png,image/jpeg,image/webp,image/gif,image/avif',result=>obj[key]=result.path)));
 }
 function move(items,index,step){const other=index+step;if(other<0 || other>=items.length)return;[items[index],items[other]]=[items[other],items[index]];changed();render();}
+function actionIcon(kind,label,action,attrs={}) {
+  const control=button('',action,{...attrs,class:'icon-action'+(attrs.class?' '+attrs.class:''),title:label,'aria-label':label});
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');
+  const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('d',kind==='up'?'m6 14 6-6 6 6':kind==='down'?'m6 10 6 6 6-6':'M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7M14 10v7');
+  svg.append(path);control.append(svg);return control;
+}
 function heading(parent,title,items,index) {
   const row=element('div',{class:'row-head'});row.append(element('h3',{},title));const actions=element('div',{class:'row-actions'});
-  actions.append(button('上へ',()=>move(items,index,-1),{'aria-label':title+'を上へ',...(index===0?{disabled:''}:{})}),button('下へ',()=>move(items,index,1),{'aria-label':title+'を下へ',...(index===items.length-1?{disabled:''}:{})}),button('削除',()=>{if(confirm(title+'を削除しますか？ 素材ファイルは残ります。')){items.splice(index,1);changed();render();}},{class:'remove','aria-label':title+'を削除'}));row.append(actions);parent.append(row);
+  actions.append(actionIcon('up',title+'を上へ移動',()=>move(items,index,-1),{...(index===0?{disabled:''}:{})}),actionIcon('down',title+'を下へ移動',()=>move(items,index,1),{...(index===items.length-1?{disabled:''}:{})}),actionIcon('delete',title+'を削除',()=>{if(confirm(title+'を削除しますか？ 素材ファイルは残ります。')){items.splice(index,1);changed();render();}},{class:'remove'}));row.append(actions);parent.append(row);
 }
 function audioPath(result) {
   const base = config.audioBase || '';
