@@ -88,3 +88,15 @@
 .visual-body { padding: 12px 0 4px; }
 .visual-body .field { margin-bottom: 12px; }
 .visual-body .page-crop-settings { margin-bottom: 8px; }
+
+/* Grid items must shrink to the viewport, even when the preview has tall content.
+   Otherwise the editor's scrollbar extends behind the status bar and off screen. */
+@media (min-width: 801px) {
+  body { height: 100svh; display: grid; grid-template-rows: auto minmax(0,1fr) auto; overflow: hidden; }
+  .workspace { height: auto; min-height: 0; grid-template-rows: minmax(0,1fr); }
+  .editor, .preview-pane { min-height: 0; min-width: 0; }
+  .editor { overscroll-behavior-y: contain; scroll-padding-block: 12px; }
+  .preview-pane { overflow: hidden; }
+  #preview-stage { min-height: 0; }
+  #preview-stage:not(.mobile):not(.landscape) iframe { min-height: 0; }
+}
