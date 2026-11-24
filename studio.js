@@ -10,6 +10,7 @@ const portraitEditors = new Set();
 const pageTextInputs = new WeakMap();
 const clone=value=>JSON.parse(JSON.stringify(value));
 async function request(url, data, raw=false) {
+  if(window.ALBUM_STUDIO_ADAPTER)return window.ALBUM_STUDIO_ADAPTER.request(url,data,raw);
   const response=await fetch(url,{method:data===undefined?'GET':'POST',headers:{'X-Album-Token':token,...(raw?{}:{'Content-Type':'application/json'})},body:data===undefined?undefined:raw?data:JSON.stringify(data)});
   const result=await response.json();if(!response.ok)throw new Error(result.error || '操作できませんでした');return result;
 }
@@ -197,6 +198,10 @@ async function preview(chapter,page) {
     await pending;if(serial!==generation)return;
     for (const editor of portraitEditors) editor.refreshImage();
     const state=JSON.stringify(snapshot);
+    if(window.ALBUM_STUDIO_ADAPTER){
+      if(state!==lastPreview || chapter!==undefined)await window.ALBUM_STUDIO_ADAPTER.preview(snapshot,chapter,page);
+      lastPreview=state;status('プレビューを更新しました');return;
+    }
     const target='/preview/index.html?v='+Date.now()+(chapter===undefined?'':'#chapter='+chapter+'&page='+page);
     if(state!==lastPreview || chapter!==undefined || !$('preview').getAttribute('src').startsWith('/preview/')){$('preview').src=target;lastPreview=state;}
     status('プレビューを更新しました');

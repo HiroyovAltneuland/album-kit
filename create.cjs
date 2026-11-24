@@ -10,7 +10,7 @@ function create(target) {
   fs.mkdirSync(destination, { recursive: true });
   fs.cpSync(__dirname, path.join(destination, 'album-kit'), { recursive: true, filter: source => {
     const relative = path.relative(__dirname, source);
-    return !relative.split(path.sep).some(part => ['.git','.github','node_modules','.idea','.vscode','UI-REVIEW.md'].includes(part) || part.startsWith('.env') || /\.(pem|key)$/i.test(part));
+    return !relative.split(path.sep).some(part => ['.git','.github','_site','node_modules','.idea','.vscode','UI-REVIEW.md'].includes(part) || part.startsWith('.env') || /\.(pem|key)$/i.test(part));
   } });
   fs.mkdirSync(path.join(destination, 'mp3'));
   fs.mkdirSync(path.join(destination, 'image'));

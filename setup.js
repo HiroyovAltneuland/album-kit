@@ -41,7 +41,7 @@
   }
   root.AlbumKit = { palettes, fonts, validate };
   if (typeof module !== 'undefined') module.exports = root.AlbumKit;
-  if (typeof document === 'undefined') return;
+  if (typeof document === 'undefined' || root.ALBUM_STUDIO) return;
   const config = validate(root.ALBUM_CONFIG, root.SCENARIO_SOURCES);
   document.getElementById('album-root').innerHTML = root.ALBUM_TEMPLATE;
   const $ = id => document.getElementById(id);

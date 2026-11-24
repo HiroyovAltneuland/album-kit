@@ -6,6 +6,7 @@
 /script/
 /dist/
 /releases/
+/_site/
 **/album.project.json
 **/album.project.json.tmp
 **/album.config.js

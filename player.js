@@ -136,7 +136,7 @@
     audio.loop = current >= 0 || loopMusic;
     if (next !== track) {
       audio.pause(); track = next;
-      if (next) audio.src = (config.audioBase || '') + encodeURIComponent(next);
+      if (next) audio.src = root.ALBUM_PREVIEW && /^(blob:|https?:)/.test(next) ? next : (config.audioBase || '') + encodeURIComponent(next);
       else { audio.removeAttribute('src'); audio.load(); }
       updateSeek();
     }
@@ -243,7 +243,7 @@
   });
   $('volume').addEventListener('input', event => { audio.volume = Number(event.target.value) / 100; });
   // Studio can open the exact page being edited without changing the published UI.
-  const previewLocation = typeof location !== 'undefined' && root.ALBUM_PREVIEW ? new URLSearchParams(location.hash.slice(1)) : null;
+  const previewLocation = root.ALBUM_PREVIEW_LOCATION ? new URLSearchParams(root.ALBUM_PREVIEW_LOCATION) : typeof location !== 'undefined' && root.ALBUM_PREVIEW ? new URLSearchParams(location.hash.slice(1)) : null;
   if (previewLocation && previewLocation.has('chapter')) {
     const index = Number(previewLocation.get('chapter')), requestedPage = Number(previewLocation.get('page'));
     if (Number.isInteger(index) && chapters[index]) { start(index); page = Math.max(0, Math.min(chapters[index].pages.length - 1, Number.isInteger(requestedPage) ? requestedPage : 0)); render(); }

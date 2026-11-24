@@ -65,7 +65,7 @@
       const file=getImage ? getImage() : chapter.image || cover || '';
       board.hidden=!file;
       if(!file){hint.textContent='画像を指定すると位置を調整できます';draw();return;}
-      if(file!==lastPath || (img.complete && !img.naturalWidth)){lastPath=file;img.src='/preview/'+file.split('/').map(encodeURIComponent).join('/')+'?crop='+Date.now();}
+      if(file!==lastPath || (img.complete && !img.naturalWidth)){lastPath=file;img.src=root.ALBUM_STUDIO_ADAPTER ? root.ALBUM_STUDIO_ADAPTER.assetURL(file) : '/preview/'+file.split('/').map(encodeURIComponent).join('/')+'?crop='+Date.now();}
     }
     refreshImage();draw();
     return {element:root,refreshImage,destroy(){observer.disconnect();}};

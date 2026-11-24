@@ -6,6 +6,19 @@
 
 A dependency-free music album editor, story reader and static-site builder. Runs locally without an LLM or API keys. MIT licensed.
 
+## ブラウザで試す
+
+- [サンプルと制作室デモ](https://hiroyovaltneuland.github.io/album-kit/)
+- [サンプル作品『波間のノート』](https://hiroyovaltneuland.github.io/album-kit/sample/)
+- [制作室を試す](https://hiroyovaltneuland.github.io/album-kit/studio/)
+- [サンプルプロジェクトZIP](https://hiroyovaltneuland.github.io/album-kit/album-kit-sample.zip)
+
+制作室デモはGitHub Pages上で動くブラウザ体験版です。素材・編集内容はサーバーへ送信せず、このタブ内で処理します。「制作一式を保存」で編集再開用ZIP、「公開用ZIP」で閲覧用の静的ファイルをダウンロードできます。タブを閉じる前に保存してください。ダウンロードした制作一式は、以下のローカル制作室で引き続き編集できます。原稿のコンパイルはローカル版で行います。
+
+サンプルの本文・画像・合成音源はオリジナルで、ツールと同じMITライセンスです。サンプル画像と音源は `demo/sample.cjs` から生成し、実作品のコンテンツは含めません。
+
+デモの配信元はこのリポジトリのGitHub Pagesです。管理者は Settings → Pages → Source を **GitHub Actions** に設定してください。`main` への更新時にテスト・サンプル生成・公開が実行されます。ローカル確認用の生成コマンドは `node build-demo.cjs`、出力は `_site/` です。
+
 ## はじめる
 
 [Node.js](https://nodejs.org/) 22以上をインストールし、このリポジトリをダウンロードまたはcloneしてください。npmパッケージのインストールは不要です。
