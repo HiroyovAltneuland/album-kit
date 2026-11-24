@@ -9,6 +9,13 @@ assert.equal(summary({}),'背景：章の画像');
 assert.equal(summary({backgroundColor:'#000000',transition:'fade'}),'黒背景 ／ フェード 800ms');
 assert.equal(summary({backgroundColor:'#FFFFFF',image:'ignored.png',portraitPosition:'20% 50%',transition:'black',transitionDuration:0}),'白背景 ／ 黒を挟む 0ms');
 assert.equal(summary({image:'art/挿絵.png',portraitPosition:'20% 50%',transition:'crossfade',transitionDuration:1200}),'画像：挿絵.png ／ クロスフェード 1200ms ／ 画像位置：指定あり');
+const audioContext={config:{tracks:[{file:'one.mp3',title:'One'},{file:'two.mp3',title:'Two'}]},audioPath:result=>result.file};
+const registerAudio=require('node:vm').runInNewContext('('+studioSource.slice(studioSource.indexOf('function registerAudio('),studioSource.indexOf('function pageImagePath('))+')',audioContext);
+assert.throws(()=>registerAudio({file:'one.mp3'}),/登録済み/);
+assert.throws(()=>registerAudio({file:'two.mp3'},audioContext.config.tracks[0]),/登録済み/);
+assert.equal(audioContext.config.tracks[0].file,'one.mp3');
+registerAudio({file:'one.mp3'},audioContext.config.tracks[0]);assert.equal(audioContext.config.tracks.length,2);
+registerAudio({file:'new.mp3'});assert.equal(audioContext.config.tracks.length,3);
 async function main(){
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'album-studio-'));
  let server;
@@ -32,6 +39,12 @@ async function main(){
   const sourceOriginal=fs.readFileSync(path.join(root,'album.config.js'),'utf8');
   const imported=await fetch(origin+'/api/asset?name='+encodeURIComponent('日本語 audio.mp3'),{method:'POST',headers:{'X-Album-Token':token,Origin:origin},body:Buffer.from('audio-fixture')});
   const asset=await imported.json();assert.equal(imported.status,200);
+  const repeatAudio=await fetch(origin+'/api/asset?name=renamed.mp3',{method:'POST',headers:{'X-Album-Token':token,Origin:origin},body:Buffer.from('audio-fixture')});
+  const reusedAudio=await repeatAudio.json();assert.equal(repeatAudio.status,200);assert.equal(reusedAudio.path,asset.path);assert.equal(reusedAudio.reused,true);
+  assert.equal(fs.readdirSync(path.join(root,'mp3')).length,1,'Identical audio must reuse the original file');
+  const differentAudio=await fetch(origin+'/api/asset?name='+encodeURIComponent('日本語 audio.mp3'),{method:'POST',headers:{'X-Album-Token':token,Origin:origin},body:Buffer.from('other-fixture')});
+  assert.equal(differentAudio.status,200);assert.notEqual((await differentAudio.json()).path,asset.path);
+  assert.equal(fs.readFileSync(path.join(root,asset.path),'utf8'),'audio-fixture','Changed audio must not overwrite an earlier version');
   const imageDir=path.join(root,'image');fs.mkdirSync(imageDir);
   fs.writeFileSync(path.join(imageDir,'existing.png'),'image-fixture');
   const uploadImage=async(name,content)=>{

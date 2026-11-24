@@ -35,7 +35,7 @@ function field(parent,label,value,set,{type='text',hint,options}={}) {
 }
 async function upload(accept, done) {
   const input=element('input',{type:'file',accept});document.body.append(input);
-  input.onchange=async()=>{const file=input.files[0];if(!file)return;try{status('素材を取り込み中…');const result=await request('/api/asset?name='+encodeURIComponent(file.name),file,true);done(result);changed();render();status(result.reused?'同じ画像があるため既存ファイルを使いました':'素材を取り込みました');}catch(error){status(error.message,true);}finally{input.remove();}};
+  input.onchange=async()=>{const file=input.files[0];if(!file)return;try{status('素材を取り込み中…');const result=await request('/api/asset?name='+encodeURIComponent(file.name),file,true);done(result);changed();render();status(result.reused?'同じ素材があるため既存ファイルを使いました':'素材を取り込みました');}catch(error){status(error.message,true);}finally{input.remove();}};
   input.oncancel=()=>input.remove();input.click();
 }
 function imageField(parent,label,obj,key) {
@@ -62,6 +62,12 @@ function audioPath(result) {
   config.chapters.forEach(chapter => chapter.pages.forEach(page => { if (page.bgm) page.bgm = base + page.bgm; }));
   config.audioBase = '';
   return result.path;
+}
+function registerAudio(result,track) {
+  const file=audioPath(result);
+  if(config.tracks.some(item=>item!==track && item.file===file))throw new Error('この音源は楽曲一覧に登録済みです。BGM欄で既存の楽曲を選んでください');
+  if(track)track.file=file;
+  else config.tracks.push({file,title:result.file.replace(/^[a-f0-9]+-/,'').replace(/\.[^.]+$/,'')});
 }
 function pageImagePath(result) {
   const base = config.imageBase || '';
@@ -90,9 +96,9 @@ function render() {
     config.tracks.forEach((track,index)=>{
       const group=element('section',{class:'group'});heading(group,String(index+1).padStart(2,'0')+' '+track.title,config.tracks,index);
       field(group,'曲名',track.title,v=>track.title=v);field(group,'音源ファイル',track.file,v=>track.file=v,{hint:(config.audioBase || '')+' 以下のファイル名'});
-      group.append(button('音源ファイルを選ぶ',()=>upload('audio/*',result=>{track.file=audioPath(result);})));root.append(group);
+      group.append(button('音源ファイルを選ぶ',()=>upload('audio/*',result=>registerAudio(result,track))));root.append(group);
     });
-    root.append(button('楽曲を追加',()=>upload('audio/*',result=>{const file=audioPath(result);config.tracks.push({file,title:result.file.replace(/^[a-f0-9]+-/,'').replace(/\.[^.]+$/,'')});}),{class:'add'}));
+    root.append(button('楽曲を追加',()=>upload('audio/*',result=>registerAudio(result)),{class:'add'}));
   }
   if(tab==='story') {
     root.append(element('h2',{},'本文・シナリオ'),element('p',{},'章とページを組み立て、画像やBGMを指定'));

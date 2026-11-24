@@ -62,11 +62,12 @@ function start(root, options={}) {
           const file=folder+crypto.randomBytes(4).toString('hex')+'-'+name;
           const absolute=project.local(root,file);
           const buffer=await body(req,256*1024*1024);
-          // Reuse existing images, including files imported by older versions.
-          if(folder==='image/') {
-            const directory=project.local(root,'image');
+          // Reuse existing media, including files imported by older versions.
+          {
+            const directory=project.local(root,folder.slice(0,-1));
             if(fs.existsSync(directory))for(const entry of fs.readdirSync(directory,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name))) {
-              if(!entry.isFile() || !/\.(png|jpe?g|webp|gif|avif)$/i.test(entry.name))continue;
+              const supported=folder==='image/'?/\.(png|jpe?g|webp|gif|avif)$/i:/\.(mp3|wav|ogg|m4a|aac|flac)$/i;
+              if(!entry.isFile() || !supported.test(entry.name))continue;
               const existing=project.local(root,folder+entry.name);
               if(fs.statSync(existing).size===buffer.length && fs.readFileSync(existing).equals(buffer))
                 return json({path:folder+entry.name,file:entry.name,reused:true});
