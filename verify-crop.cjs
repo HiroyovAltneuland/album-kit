@@ -42,6 +42,13 @@ console.log('PASS: legacy positions, precise percentages, square crop geometry, 
   parent.portraitPosition='70% 50%';root.children.at(-1).onclick();
   assert.equal(page.portraitPosition,undefined);assert.equal(x.value,70);
   page.image='second.png';editor.refreshImage();assert(image.src.includes('/preview/art/second.png'));
+  global.ALBUM_STUDIO_ADAPTER={assetURL:file=>'https://example.test/album-kit/sample/'+file};
+  page.image='hosted.png';editor.refreshImage();assert.equal(image.src,'https://example.test/album-kit/sample/art/hosted.png');
+  global.ALBUM_STUDIO_ADAPTER.assetURL=()=> 'blob:uploaded-image';
+  page.image='uploaded.png';editor.refreshImage();assert.equal(image.src,'blob:uploaded-image');
+  const chapterCrop=create({chapter:{image:'image/cover.png'},onChange(){}});
+  assert.equal(chapterCrop.element.children[2].children[0].src,'blob:uploaded-image');chapterCrop.destroy();
+  delete global.ALBUM_STUDIO_ADAPTER;
   assert.equal(changes,2);editor.destroy();
   delete global.document;delete global.ResizeObserver;
   console.log('PASS: page-only crop edits, inherited chapter position, reset, custom image base and image replacement.');
