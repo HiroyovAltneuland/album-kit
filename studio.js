@@ -8,6 +8,14 @@ let scenarioCompile=null, compiling=false;
 const collapsedChapters = new WeakSet();
 const portraitEditors = new Set();
 const pageTextInputs = new WeakMap();
+const openVisualSettings = new WeakSet();
+const visualSummaries = new Map();
+function visualSummary(page) {
+  const color=page.backgroundColor?.toLowerCase();
+  const background=color ? (color==='#000000'?'黒背景':color==='#ffffff'?'白背景':'単色 '+color) : page.image?'画像：'+page.image.split('/').pop():'背景：章の画像';
+  const effect={fade:'フェード',crossfade:'クロスフェード',black:'黒を挟む'}[page.transition];
+  return [background,effect?effect+' '+(page.transitionDuration??800)+'ms':'',!color&&page.portraitPosition?'画像位置：指定あり':''].filter(Boolean).join(' ／ ');
+}
 const clone=value=>JSON.parse(JSON.stringify(value));
 async function request(url, data, raw=false) {
   if(window.ALBUM_STUDIO_ADAPTER)return window.ALBUM_STUDIO_ADAPTER.request(url,data,raw);
@@ -15,7 +23,7 @@ async function request(url, data, raw=false) {
   const result=await response.json();if(!response.ok)throw new Error(result.error || '操作できませんでした');return result;
 }
 function status(message,error=false){$('status').textContent=message;$('status').classList.toggle('error',error);}
-function changed(){dirty=true;updateCompilePanel();$('save-state').textContent='未保存の変更';$('project-title').textContent=config.title || 'アルバム';clearTimeout(timer);timer=setTimeout(()=>preview(),700);}
+function changed(){dirty=true;for(const [page,node]of visualSummaries){node.textContent=visualSummary(page);node.title=node.textContent;}updateCompilePanel();$('save-state').textContent='未保存の変更';$('project-title').textContent=config.title || 'アルバム';clearTimeout(timer);timer=setTimeout(()=>preview(),700);}
 function element(tag,attrs={},text) {const node=document.createElement(tag);for(const [key,value]of Object.entries(attrs))node.setAttribute(key,value);if(text!==undefined)node.textContent=text;return node;}
 function button(label,action,attrs={}){const node=element('button',{type:'button',...attrs},label);node.onclick=action;return node;}
 function field(parent,label,value,set,{type='text',hint,options}={}) {
@@ -64,6 +72,7 @@ function pageImagePath(result) {
 }
 function musicOptions(){return [['','無音'],...config.tracks.map(t=>[t.file,t.title])];}
 function render() {
+  visualSummaries.clear();
   document.querySelectorAll('[data-tab]').forEach(node=>{if(node.dataset.tab===tab)node.setAttribute('aria-current','page');else node.removeAttribute('aria-current');});
   for (const editor of portraitEditors) editor.destroy();
   portraitEditors.clear();
@@ -111,11 +120,19 @@ function render() {
       portraitEditors.add(crop);section.append(crop.element);
       chapter.pages.forEach((page,pageIndex)=>{
         const block=element('div',{class:'page-editor'});heading(block,'ページ '+(pageIndex+1),chapter.pages,pageIndex);
-        field(block,'話者',page.speaker,v=>page.speaker=v);
+        field(block,'話者',page.speaker,v=>page.speaker=v).parentElement.classList.add('compact-field');
         pageTextInputs.set(page,field(block,'本文',page.text,v=>page.text=v,{type:'textarea'}));
         const choices=musicOptions();if(page.bgm && !choices.some(([file])=>file===page.bgm))choices.push([page.bgm,page.bgm+'（原稿指定）']);
-        field(block,'BGM',page.bgm || '',v=>page.bgm=v || null,{options:choices});
-        field(block,'ページの背景',page.backgroundColor?'color':page.image?'image':'chapter',v=>{
+        field(block,'BGM',page.bgm || '',v=>page.bgm=v || null,{options:choices}).parentElement.classList.add('compact-field');
+        const visuals=element('details',{class:'page-visual-settings'});
+        visuals.open=openVisualSettings.has(page);
+        const visualHeading=element('summary');
+        const visualDescription=element('span',{class:'visual-summary'},visualSummary(page));visualDescription.title=visualDescription.textContent;
+        visualSummaries.set(page,visualDescription);
+        visualHeading.append(element('span',{class:'visual-heading'},'背景・画像演出'),visualDescription);
+        const visualBody=element('div',{class:'visual-body'});visuals.append(visualHeading,visualBody);block.append(visuals);
+        visuals.addEventListener('toggle',()=>{if(!visuals.isConnected)return;if(visuals.open)openVisualSettings.add(page);else openVisualSettings.delete(page);});
+        field(visualBody,'ページの背景',page.backgroundColor?'color':page.image?'image':'chapter',v=>{
           if(v==='color'){page.backgroundColor='#000000';delete page.image;}
           else {delete page.backgroundColor;if(v==='chapter')delete page.image;}
           if(v!=='image')imageInput.value='';
@@ -123,18 +140,19 @@ function render() {
           backgroundFields(v);
         },{options:[['chapter','章の画像'],['image','画像'],['color','単色']]});
         const imageControls=element('div'),colorControls=element('div');
-        block.append(imageControls,colorControls);
+        visualBody.append(imageControls,colorControls);
         const imageInput=field(imageControls,'ページの画像',page.image || '',v=>{page.image=v || null;delete page.backgroundColor;},{hint:(config.imageBase || '')+' 以下のファイル名。空欄なら章の画像'});
         imageControls.append(button('ページ画像を選ぶ',()=>upload('image/png,image/jpeg,image/webp,image/gif,image/avif',result=>{page.image=pageImagePath(result);delete page.backgroundColor;})));
         const colorInput=field(colorControls,'背景色',page.backgroundColor || '#000000',v=>page.backgroundColor=v,{type:'color'});
         for(const [label,value] of [['黒','#000000'],['白','#ffffff']])colorControls.append(button(label,()=>{page.backgroundColor=value;colorInput.value=value;changed();}));
-        field(block,'背景の切り替え',page.transition || 'instant',v=>page.transition=v,{options:[['instant','即時'],['fade','フェード'],['crossfade','クロスフェード'],['black','黒を挟む']],hint:'このページへ入るときの背景だけに適用します。同じ背景が続く場合は再演出しません'});
-        const durationPreset=field(block,'切り替え時間',String(page.transitionDuration ?? 800),v=>{
+        field(visualBody,'背景の切り替え',page.transition || 'instant',v=>{page.transition=v;timing.hidden=v==='instant';},{options:[['instant','即時'],['fade','フェード'],['crossfade','クロスフェード'],['black','黒を挟む']]});
+        const timing=element('div');timing.hidden=!page.transition || page.transition==='instant';visualBody.append(timing);
+        const durationPreset=field(timing,'切り替え時間',String(page.transitionDuration ?? 800),v=>{
           customDuration.hidden=v!=='custom';
           if(v!=='custom'){page.transitionDuration=Number(v);durationInput.value=v;}
         },{options:[['300','短い（300ms）'],['800','標準（800ms）'],['1600','長い（1600ms）'],['custom','直接指定']],hint:'「黒を挟む」は暗転と復帰を合わせた時間です'});
         durationPreset.value=[300,800,1600].includes(page.transitionDuration ?? 800)?String(page.transitionDuration ?? 800):'custom';
-        const customDuration=element('div');customDuration.hidden=durationPreset.value!=='custom';block.append(customDuration);
+        const customDuration=element('div');customDuration.hidden=durationPreset.value!=='custom';timing.append(customDuration);
         const durationInput=field(customDuration,'時間（ミリ秒）',page.transitionDuration ?? 800,v=>page.transitionDuration=Number(v),{type:'number',hint:'0〜10000ms。動きを減らす設定の端末では即時に切り替えます'});
         durationInput.min='0';durationInput.max='10000';durationInput.step='1';
         const pageCropDetails = element('details', {class:'page-crop-settings'});
@@ -153,7 +171,7 @@ function render() {
           portraitEditors.add(pageCrop);
           pageCropDetails.append(pageCrop.element);
         });
-        block.append(pageCropDetails);
+        visualBody.append(pageCropDetails);
         function backgroundFields(mode){imageControls.hidden=mode!=='image';colorControls.hidden=mode!=='color';pageCropDetails.hidden=mode==='color';}
         backgroundFields(page.backgroundColor?'color':page.image?'image':'chapter');
         const pageActions=element('div',{class:'page-actions'});

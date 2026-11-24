@@ -71,3 +71,20 @@
 @media (pointer: coarse) {
   .row-actions .icon-action { width: 44px; height: 44px; min-height: 44px; }
 }
+
+/* Keep music visible while grouping occasional visual adjustments. */
+.page-editor { padding: 12px; }
+.page-editor > .row-head { margin-bottom: 12px; }
+.page-editor > .field { margin-bottom: 12px; }
+.page-editor > .compact-field { display: grid; grid-template-columns: 40px minmax(0,1fr); align-items: center; gap: 8px; }
+.page-editor > .compact-field > span { margin: 0; }
+.page-editor > .compact-field select { min-width: 0; text-overflow: ellipsis; }
+.page-visual-settings { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.page-visual-settings > summary { cursor: pointer; padding: 10px 0; font-size: 13px; line-height: 1.6; }
+.page-visual-settings > summary::marker { color: var(--muted); }
+.page-visual-settings > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.visual-heading { font-weight: 500; }
+.visual-summary { display: block; margin: 4px 0 0 16px; color: var(--secondary); font-size: 12px; overflow-wrap: anywhere; }
+.visual-body { padding: 12px 0 4px; }
+.visual-body .field { margin-bottom: 12px; }
+.visual-body .page-crop-settings { margin-bottom: 8px; }

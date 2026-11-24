@@ -3,6 +3,12 @@ const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),asse
 const {once}=require('node:events');
 const project=require('./project.cjs');
 const {start}=require('./studio.cjs');
+const studioSource=fs.readFileSync(path.join(__dirname,'studio.js'),'utf8');
+const summary=require('node:vm').runInNewContext('('+studioSource.slice(studioSource.indexOf('function visualSummary('),studioSource.indexOf('const clone='))+')');
+assert.equal(summary({}),'背景：章の画像');
+assert.equal(summary({backgroundColor:'#000000',transition:'fade'}),'黒背景 ／ フェード 800ms');
+assert.equal(summary({backgroundColor:'#FFFFFF',image:'ignored.png',portraitPosition:'20% 50%',transition:'black',transitionDuration:0}),'白背景 ／ 黒を挟む 0ms');
+assert.equal(summary({image:'art/挿絵.png',portraitPosition:'20% 50%',transition:'crossfade',transitionDuration:1200}),'画像：挿絵.png ／ クロスフェード 1200ms ／ 画像位置：指定あり');
 async function main(){
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'album-studio-'));
  let server;
