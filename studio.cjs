@@ -26,9 +26,13 @@ function start(root, options={}) {
   const token=crypto.randomBytes(24).toString('hex');
   let origin;
   const server=http.createServer(async(req,res)=>{
+    res.setHeader('Cross-Origin-Resource-Policy','same-origin');
+    res.setHeader('Content-Security-Policy',"frame-ancestors 'self'");
+    res.setHeader('X-Content-Type-Options','nosniff');
     const json=(value,status=200)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
     try {
       if (req.headers.host !== new URL(origin).host) return json({error:'Invalid host'},403);
+      if(req.headers['sec-fetch-site']==='cross-site')return json({error:'外部サイトから制作室へはアクセスできません'},403);
       const url=new URL(req.url,origin);
       if (url.pathname.startsWith('/api/')) {
         if(req.headers['x-album-token']!==token || (req.headers.origin && req.headers.origin!==origin))return json({error:'この制作画面から操作してください'},403);

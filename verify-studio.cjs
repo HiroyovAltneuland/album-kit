@@ -17,6 +17,8 @@ async function main(){
   server=start(root);await once(server,'listening');
   const origin='http://127.0.0.1:'+server.address().port;
   const html=await(await fetch(origin)).text();const token=/name="album-token" content="([^"]+)"/.exec(html)[1];
+  const protectedPage=await fetch(origin);assert.equal(protectedPage.headers.get('cross-origin-resource-policy'),'same-origin');assert.equal(protectedPage.headers.get('content-security-policy'),"frame-ancestors 'self'");
+  assert.equal((await fetch(origin+'/preview/album.config.js',{headers:{'Sec-Fetch-Site':'cross-site'}})).status,403);
   assert(html.includes('href="/branding/favicon.svg"'));
   const favicon=await fetch(origin+'/branding/favicon.svg');assert.equal(favicon.status,200);assert.equal(favicon.headers.get('content-type'),'image/svg+xml');
   const icon=await fetch(origin+'/branding/favicon.ico');assert.equal(icon.status,200);const bytes=Buffer.from(await icon.arrayBuffer());assert.equal(bytes.readUInt16LE(2),1);assert.equal(bytes.readUInt16LE(4),3);

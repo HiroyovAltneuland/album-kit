@@ -1,7 +1,7 @@
 'use strict';
 const fs=require('node:fs'),path=require('node:path');
 const {config,assets}=require('./demo/sample.cjs'),{zip}=require('./demo/zip.js');
-const libraryFiles=['base.css','theme.css','template.js','setup.js','player.js','studio.js','studio.css','studio.html','studio.cjs','crop-editor.js','project.cjs','build-scenarios.cjs','create.cjs','create-album.bat','create-album.command','open-studio.bat','open-studio.command','README.md','WORKFLOW.md','LICENSE','THIRD_PARTY_NOTICES.md','branding/favicon.svg','branding/favicon.ico','branding/apple-touch-icon.png'];
+const libraryFiles=['base.css','theme.css','template.js','setup.js','player.js','studio.js','studio.css','studio.html','studio.cjs','crop-editor.js','project.cjs','build-scenarios.cjs','create.cjs','create-album.bat','create-album.command','open-studio.bat','open-studio.command','README.md','WORKFLOW.md','SECURITY.md','LICENSE','THIRD_PARTY_NOTICES.md','branding/favicon.svg','branding/favicon.ico','branding/apple-touch-icon.png'];
 function buildDemo(output=path.join(__dirname,'_site')){
  output=path.resolve(output);fs.mkdirSync(output,{recursive:true});
  const write=(name,content)=>{const file=path.join(output,name);fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,content);};

@@ -6,7 +6,7 @@
     const chunks=[],directory=[];let offset=0,centralSize=0;
     if(entries.length>65535)throw new Error('ファイル数が多すぎます');
     for(const [path,input]of entries){
-      if(!path || path.startsWith('/') || path.split('/').some(p=>p==='..'||p==='.') || /[\\\x00]/.test(path))throw new Error('不正なファイル名です');
+      if(typeof path!=='string' || !path || path.startsWith('/') || /[\\:\x00-\x1f]/.test(path) || path.split('/').some(p=>!p||p==='..'||p==='.'||/[. ]$/.test(p)||/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(p)))throw new Error('不正なファイル名です');
       const name=utf8.encode(path),data=typeof input==='string'?utf8.encode(input):new Uint8Array(input);
       if(name.length>65535 || offset+data.length>0x7fffffff)throw new Error('ZIPが大きすぎます');
       const crc=crc32(data),local=new Uint8Array(30+name.length),l=new DataView(local.buffer);
