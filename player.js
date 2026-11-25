@@ -206,6 +206,8 @@
   }
   function start(index) {
     finishScene(); sceneKey = null;
+    // Chapter entry is a musical cue, even when the previous track is identical.
+    playTrack(null);
     current = index; page = 0;
     $('menu').hidden = true; $('reader').hidden = false; $('menu-button').hidden = false;
     $('game').classList.add('playing'); render(); $('next').focus();

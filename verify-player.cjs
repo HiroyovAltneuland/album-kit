@@ -28,6 +28,19 @@ el('music-track').value='one.mp3';el('music-play').click();audio.duration=100;au
 audio.handlers.ended();assert.equal(el('music-track').value,'two.mp3');el('music-mode').click();assert.equal(audio.loop,true);audio.handlers.ended();assert.equal(el('music-track').value,'two.mp3');
 console.log('PASS: scenario parsing, chapter transitions, artwork URLs, page crop inheritance, audio seeking and repeat.');
 
+// The same track restarts at chapter entry, but continues across ordinary pages.
+el('music-track').value='one.mp3';el('music-play').click();audio.currentTime=42;
+el('chapters').children[0].click();assert.equal(audio.currentTime,0);
+config.chapters[0].pages[1].bgm='one.mp3';
+config.chapters[1].pages[0].bgm='one.mp3';
+audio.currentTime=12;el('next').click();assert.equal(audio.currentTime,12);
+el('next').click();el('yes').click();assert.equal(audio.currentTime,0);
+el('sound').click();audio.currentTime=8;
+el('chapters').children[0].click();assert.equal(audio.currentTime,0);assert.equal(el('sound').textContent,'BGM OFF');
+el('sound').click();el('menu-button').click();
+config.chapters[0].pages[1].bgm=null;delete config.chapters[1].pages[0].bgm;
+console.log('PASS: chapter entry restarts identical BGM, page turns preserve position and BGM OFF is retained.');
+
 assert.throws(()=>validate({...config,chapters:[{title:'Invalid',desktopPosition:'invalid',pages:[{text:'Note'}]}]}),/center/);
 
 const colored=parseScenario('#Artist\nBefore[p]\n[bg color="black" effect="fade" time="800"]Dark[p]Still dark[p]\n[image storage="scene.png" effect="black" time="1600"]Back');
