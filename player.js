@@ -52,6 +52,24 @@
   const $ = id => document.getElementById(id);
   const sources = root.SCENARIO_SOURCES || {};
   const config = root.ALBUM_CONFIG;
+  const toolbarToggle = $('toolbar-toggle'), toolbarTools = $('toolbar-tools');
+  function closeToolbar() {
+    toolbarToggle.setAttribute('aria-expanded', 'false');
+    toolbarTools.classList.remove('is-open');
+  }
+  toolbarToggle.addEventListener('click', () => {
+    const open = toolbarToggle.getAttribute('aria-expanded') !== 'true';
+    toolbarToggle.setAttribute('aria-expanded', String(open));
+    toolbarTools.classList.toggle('is-open', open);
+  });
+  document.addEventListener('click', event => {
+    if (!event.target.closest('.toolbar')) closeToolbar();
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && toolbarToggle.getAttribute('aria-expanded') === 'true') {
+      closeToolbar(); toolbarToggle.focus();
+    }
+  });
   const chapters = config.chapters.map(chapter => ({ ...chapter, pages: chapter.pages || parseScenario(sources[chapter.file] || '', config.speakers) }));
   for (const chapter of chapters) { if (!chapter.pages.length) throw new Error('本文がありません: ' + chapter.title); }
   const storageKey = config.id + '-read';
@@ -205,6 +223,7 @@
     playTrack(item.bgm);
   }
   function start(index) {
+    closeToolbar();
     finishScene(); sceneKey = null;
     // Chapter entry is a musical cue, even when the previous track is identical.
     playTrack(null);
@@ -213,6 +232,7 @@
     $('game').classList.add('playing'); render(); $('next').focus();
   }
   function menu() {
+    closeToolbar();
     finishScene(); sceneKey = null;
     current = -1; playTrack(null);
     $('music-status').textContent = '';

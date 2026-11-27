@@ -7,7 +7,7 @@ assert.equal(parseScenario('Artist\nNotes',['Artist'])[0].speaker,'Artist');
 assert.equal(parseScenario('[playbgm storage="song.mp3"]First[p][stopbgm]Second')[1].bgm,null);
 class Element {
  constructor(){this.children=[];this.style={setProperty(k,v){this[k]=v;}};this.classList={add(){},remove(){},toggle(){}};this.handlers={};this.open=false;}
- append(...children){this.children.push(...children);}addEventListener(k,f){this.handlers[k]=f;}click(){this.handlers.click?.();}setAttribute(){}focus(){}showModal(){this.open=true;}close(){this.open=false;}
+ append(...children){this.children.push(...children);}addEventListener(k,f){this.handlers[k]=f;}click(){this.handlers.click?.();}setAttribute(k,v){(this.attributes ||= {})[k]=v;}getAttribute(k){return this.attributes?.[k] ?? null;}focus(){}showModal(){this.open=true;}close(){this.open=false;}
  querySelectorAll(){return this.children.map(child=>child.children[1].children[2]);}
 }
 const nodes=new Map(),el=id=>{if(!nodes.has(id))nodes.set(id,new Element());return nodes.get(id);};
@@ -21,7 +21,11 @@ validate(config);
 const context={window:{ALBUM_CONFIG:config},URL,Audio,document:{baseURI:'https://example.test/album/index.html',getElementById:el,createElement:()=>new Element(),addEventListener(){}},localStorage:{getItem(){return null;},setItem(){}}};
 vm.runInNewContext(fs.readFileSync(require.resolve('./player.js'),'utf8'),context);
 assert.equal(el('chapters').children.length,2);
+el('toolbar-toggle').click();assert.equal(el('toolbar-toggle').getAttribute('aria-expanded'),'true');
+el('toolbar-toggle').click();assert.equal(el('toolbar-toggle').getAttribute('aria-expanded'),'false');
+el('toolbar-toggle').click();
 el('chapters').children[0].click();assert.equal(el('message').textContent,'First');assert.equal(el('game').style['--desktop-scene-position'],'center top');assert.equal(el('game').style['--scene-image'],'url("https://example.test/album/image/cover.png")');assert.equal(el('game').style['--portrait-focus'],'63.7% 50%');
+assert.equal(el('toolbar-toggle').getAttribute('aria-expanded'),'false');
 el('next').click();assert.equal(el('message').textContent,'Second');assert.equal(el('game').style['--portrait-focus'],'25% 50%');
 el('next').click();assert(el('next-dialog').open);el('yes').click();assert.equal(el('message').textContent,'End');assert.equal(el('game').style['--desktop-scene-position'],'center center');el('next').click();assert.equal(el('menu').hidden,false);
 el('music-track').value='one.mp3';el('music-play').click();audio.duration=100;audio.handlers.loadedmetadata();el('music-seek').handlers.input({target:{value:'42'}});assert.equal(audio.currentTime,42);
