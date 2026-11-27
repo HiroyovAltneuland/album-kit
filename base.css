@@ -107,7 +107,37 @@
 }
 
 @media (max-width: 1100px) and (max-height: 500px) and (orientation: landscape) {
-  .playing .backdrop { top: 48px; background-position: center, center top; }
+  .toolbar {
+    min-height: 44px;
+    padding-block: 0;
+    background: transparent;
+    border-bottom: 0;
+  }
+  .toolbar .tools {
+    gap: 4px;
+    padding: 0 6px;
+    border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--bg) 64%, transparent);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+  .toolbar .tools label { color: var(--ink); gap: 4px; }
+  .toolbar .tools button {
+    min-height: 32px;
+    padding: 4px 8px;
+    background: transparent;
+    border-color: transparent;
+  }
+  .toolbar .volume input { width: 56px; margin-inline: 0; }
+  .playing .backdrop { top: 0; background-position: center, var(--desktop-scene-position, center top); }
+  #reader { min-height: calc(100svh - 44px); }
+}
+/* Keep touch targets generous without restoring the full-width opaque band. */
+@media (max-width: 1100px) and (max-height: 500px) and (orientation: landscape) and (pointer: coarse) {
+  .toolbar .tools button { min-height: 44px; }
+  .toolbar .volume input { min-height: 44px; }
+  #reader { min-height: calc(100svh - 46px); }
 }
 
 /* Idle help adds no information beyond the track selector and play button. */
