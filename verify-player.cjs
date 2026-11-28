@@ -18,6 +18,8 @@ class Audio {
 }
 const config={id:'test',title:'Album',audioBase:'mp3/',imageBase:'image/',tracks:[{file:'one.mp3',title:'One'},{file:'two.mp3',title:'Two'}],chapters:[{act:'01',title:'Notes',image:'image/cover.png',desktopPosition:'top',portraitPosition:'25% 50%',pages:[{text:'First',bgm:'one.mp3',portraitPosition:'63.7% 50%'},{text:'Second',bgm:null}]},{act:'02',title:'Credits',pages:[{text:'End'}]}]};
 validate(config);
+validate({...config,chapterUnit:'幕'});validate({...config,chapterUnit:''});
+assert.throws(()=>validate({...config,chapterUnit:7}),/文字列/);
 const context={window:{ALBUM_CONFIG:config},URL,Audio,document:{baseURI:'https://example.test/album/index.html',getElementById:el,createElement:()=>new Element(),addEventListener(){}},localStorage:{getItem(){return null;},setItem(){}}};
 vm.runInNewContext(fs.readFileSync(require.resolve('./player.js'),'utf8'),context);
 assert.equal(el('chapters').children.length,2);

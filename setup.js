@@ -16,6 +16,7 @@
   function validate(config, sources = {}) {
     if (!config || !/^[a-zA-Z0-9_-]+$/.test(config.id || '')) throw new Error('album.config.js: id は英数字・_・-で指定してください');
     if (typeof config.title !== 'string' || !config.title.trim()) throw new Error('アルバムの title が必要です');
+    if (config.chapterUnit !== undefined && typeof config.chapterUnit !== 'string') throw new Error('シナリオの単位は文字列で指定してください');
     if (!Array.isArray(config.tracks) || !Array.isArray(config.chapters)) throw new Error('tracks と chapters は配列で指定してください');
     const files = new Set();
     for (const track of config.tracks) {
@@ -51,7 +52,8 @@
   $('menu-brand').textContent = config.brand || config.title;
   $('album-description').textContent = config.description || '';
   $('track-count').textContent = '全' + config.tracks.length + '曲';
-  $('chapter-count').textContent = '全' + config.chapters.length + '章 ・ どの章からでも読めます';
+  const chapterUnit = config.chapterUnit?.trim() || '章';
+  $('chapter-count').textContent = '全' + config.chapters.length + chapterUnit + ' ・ どの' + chapterUnit + 'からでも読めます';
   $('chapter-count').parentElement.parentElement.hidden = !config.chapters.length;
   document.querySelector('.music-panel').hidden = !config.tracks.length;
   const option = (value, text) => { const el = document.createElement('option'); el.value = value; el.textContent = text; return el; };

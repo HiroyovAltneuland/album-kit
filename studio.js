@@ -89,6 +89,7 @@ function render() {
     field(root,'タイトル',config.title,v=>config.title=v);
     field(root,'アーティスト・ブランド',config.brand,v=>config.brand=v);
     field(root,'紹介文',config.description,v=>config.description=v,{type:'textarea'});
+    field(root,'シナリオの単位',config.chapterUnit || '',v=>config.chapterUnit=v,{hint:'未指定は「章」。例：幕、話、編。メニューの「全7章」「どの章からでも読めます」に使います'});
     imageField(root,'ジャケット・背景画像',config,'cover');
   }
   if(tab==='tracks') {
