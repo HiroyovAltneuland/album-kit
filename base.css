@@ -224,8 +224,10 @@
   filter: none;
   transform: none;
 }
-.playing.solid-scene .reading-area {
-  background: var(--scene-color);
+.scene-transition-portrait { display: none; }
+@media (max-width: 750px) and (orientation: portrait) {
+  .scene-transition-portrait { display: block; }
+  .playing.solid-scene .reading-area { background: var(--scene-color); }
 }
 
 /* Desktop chapter artwork alignment is independent from portrait cropping. */

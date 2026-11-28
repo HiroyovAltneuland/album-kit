@@ -106,6 +106,7 @@ async function checkAnimations(){
  assert.equal(active.at(-1).frames[0].opacity,1);assert.equal(active.at(-1).frames[1].opacity,0);
  assert.equal(active.at(-1).options.duration,1200);
  assert.equal(el('reading-area').children.at(-1).style.background,'#000');
+ assert.equal(el('reading-area').children.at(-1).className,'scene-transition-portrait');
  el('menu-button').click();assert.equal(el('menu').hidden,false);
  console.log('PASS: chapter opening and exact-page preview fade from black with the configured duration.');
 }

@@ -175,6 +175,7 @@
     for (const surface of surfaces) {
       const computed = getComputedStyle(surface);
       const layer = document.createElement('div');
+      layer.className = surface === surfaces[0] ? 'scene-transition-backdrop' : 'scene-transition-portrait';
       layer.setAttribute('aria-hidden','true');
       Object.assign(layer.style, {position:'absolute',inset:'0',pointerEvents:'none',
         background:entering || effect === 'black' ? '#000' : computed.background,
