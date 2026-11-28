@@ -200,6 +200,44 @@
       apply();run(1,0,duration).then(()=>{if(!finished)finishScene();}).catch(()=>{});
     }
   }
+  let textTimer = null, finishText = null;
+  function cancelText() {
+    if (textTimer !== null) clearTimeout(textTimer);
+    textTimer = null; finishText = null;
+  }
+  function showText(text) {
+    cancelText();
+    const message = $('message');
+    $('next').style.visibility = 'hidden';
+    $('next').disabled = true;
+    $('end-hint').style.visibility = 'hidden';
+    // Reserve the full passage's layout so revealing text never moves the controls.
+    if (typeof setTimeout !== 'function' || (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+      message.textContent = text;
+      $('next').style.visibility = 'visible'; $('next').disabled = false;
+      $('end-hint').style.visibility = 'visible';
+      return;
+    }
+    message.textContent = '';
+    message.setAttribute('aria-live', 'off');
+    const layout = document.createElement('span'), visible = document.createElement('span');
+    layout.className = 'message-layout'; layout.setAttribute('aria-hidden','true'); layout.textContent = text;
+    visible.className = 'message-visible'; message.append(layout, visible);
+    const letters = typeof Intl !== 'undefined' && Intl.Segmenter
+      ? Array.from(new Intl.Segmenter('ja',{granularity:'grapheme'}).segment(text), item=>item.segment) : Array.from(text);
+    let count = 0;
+    finishText = () => {
+      cancelText(); message.setAttribute('aria-live','polite'); visible.textContent = text;
+      $('next').style.visibility = 'visible'; $('next').disabled = false;
+      $('end-hint').style.visibility = 'visible';
+    };
+    const tick = () => {
+      visible.textContent = letters.slice(0, ++count).join('');
+      if (count >= letters.length) finishText();
+      else textTimer = setTimeout(tick, 30);
+    };
+    tick();
+  }
   function render() {
     const chapter = chapters[current], item = chapter.pages[page];
     const background = item.image ? (config.imageBase || '') + item.image : chapterImage(current);
@@ -218,7 +256,7 @@
     $('page-count').textContent = `${page + 1} / ${chapter.pages.length}`;
     $('speaker').textContent = item.speaker;
     $('speaker').hidden = !item.speaker;
-    $('message').textContent = item.text;
+    showText(item.text);
     $('previous').disabled = page === 0;
     $('progress-fill').style.width = ((page + 1) / chapter.pages.length * 100) + '%';
     $('end-hint').textContent = page === chapter.pages.length - 1 ? (current === chapters.length - 1 ? 'クリックでメニューへ' : 'クリックで読了') : '';
@@ -231,9 +269,10 @@
     playTrack(null);
     current = index; page = Math.max(0, Math.min(chapters[index].pages.length - 1, Number.isInteger(requestedPage) ? requestedPage : 0));
     $('menu').hidden = true; $('reader').hidden = false; $('menu-button').hidden = false;
-    $('game').classList.add('playing'); render(); $('next').focus();
+    $('game').classList.add('playing'); render(); $('reader').setAttribute('tabindex','-1'); $('reader').focus();
   }
   function menu() {
+    cancelText();
     closeToolbar();
     finishScene(); sceneKey = null;
     current = -1; playTrack(null);
@@ -244,6 +283,7 @@
   }
   function next() {
     if (current < 0 || $('next-dialog').open) return;
+    if (finishText) { finishText(); return; }
     if (page < chapters[current].pages.length - 1) { page++; render(); return; }
     if (!completed.includes(current)) completed.push(current);
     try { localStorage.setItem(storageKey, JSON.stringify(completed)); } catch (_) {}

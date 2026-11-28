@@ -110,4 +110,19 @@ async function checkAnimations(){
  el('menu-button').click();assert.equal(el('menu').hidden,false);
  console.log('PASS: chapter opening and exact-page preview fade from black with the configured duration.');
 }
-checkAnimations().catch(error=>{console.error(error);process.exitCode=1;});
+function checkTypewriter(){
+ nodes.clear();const pending=new Map();let timerId=0;
+ const typed={...config,chapters:[{act:'01',title:'Typing',pages:[{text:'あ👨‍👩‍👧い'},{text:'次の本文'}]}]};
+ vm.runInNewContext(fs.readFileSync(require.resolve('./player.js'),'utf8'),{...context,window:{ALBUM_CONFIG:typed},Intl,
+  setTimeout(fn){pending.set(++timerId,fn);return timerId;},clearTimeout(id){pending.delete(id);}});
+ const content=()=>el('message').children.at(-1).textContent;
+ const tick=()=>{const [id,fn]=pending.entries().next().value;pending.delete(id);fn();};
+ el('chapters').children[0].click();assert.equal(content(),'あ');assert.equal(el('next').style.visibility,'hidden');
+ tick();assert.equal(content(),'あ👨‍👩‍👧');
+ el('message').click();assert.equal(content(),'あ👨‍👩‍👧い');assert.equal(el('page-count').textContent,'1 / 2');assert.equal(pending.size,0);assert.equal(el('next').style.visibility,'visible');
+ el('next').click();assert.equal(content(),'次');assert.equal(el('page-count').textContent,'2 / 2');
+ while(pending.size)tick();assert.equal(content(),'次の本文');assert.equal(el('next').disabled,false);
+ el('previous').click();assert.equal(content(),'あ');el('menu-button').click();assert.equal(pending.size,0);
+ console.log('PASS: grapheme reveal, tap to complete without advancing, natural completion, page changes and timer cleanup.');
+}
+checkAnimations().then(checkTypewriter).catch(error=>{console.error(error);process.exitCode=1;});

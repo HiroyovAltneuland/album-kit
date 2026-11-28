@@ -236,6 +236,9 @@
 }
 
 /* Equal-height cards anchor their artwork at the top, regardless of title length. */
+.message { display: grid; }
+.message-layout, .message-visible { grid-area: 1 / 1; min-width: 0; }
+.message-layout { visibility: hidden; pointer-events: none; }
 .chapter { display: flex; flex-direction: column; align-items: stretch; min-width: 0; }
 .chapter .thumbnail { flex: none; }
 .thumbnail img { display: block; }
