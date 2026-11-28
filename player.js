@@ -164,7 +164,8 @@
   function changeScene(key, apply, effect, duration) {
     finishScene();
     if (key === sceneKey) { apply(); return; }
-    const animate = sceneKey !== null && effect !== 'instant' && duration > 0 &&
+    const entering = sceneKey === null;
+    const animate = effect !== 'instant' && duration > 0 &&
       typeof getComputedStyle === 'function' && typeof document.createElement('div').animate === 'function' &&
       !(typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches);
     sceneKey = key;
@@ -176,11 +177,11 @@
       const layer = document.createElement('div');
       layer.setAttribute('aria-hidden','true');
       Object.assign(layer.style, {position:'absolute',inset:'0',pointerEvents:'none',
-        background:effect === 'black' ? '#000' : computed.background,
+        background:entering || effect === 'black' ? '#000' : computed.background,
         borderRadius:computed.borderRadius});
       if (surface === surfaces[0]) {
         Object.assign(layer.style,{top:computed.top,zIndex:'-1',
-          filter:effect === 'black' ? 'none' : computed.filter,transform:computed.transform});
+          filter:entering || effect === 'black' ? 'none' : computed.filter,transform:computed.transform});
         $('game').append(layer);
       } else { layer.style.zIndex='1';surface.append(layer); }
       layers.push(layer);
@@ -192,7 +193,7 @@
       animations=layers.map(layer=>layer.animate([{opacity:from},{opacity:to}],{duration:time,fill:'forwards',easing:'ease-in-out'}));
       return Promise.all(animations.map(a=>a.finished));
     };
-    if(effect === 'black') {
+    if(effect === 'black' && !entering) {
       run(0,1,duration/2).then(()=>{if(finished)return;apply();return run(1,0,duration/2);}).then(()=>{if(!finished)finishScene();}).catch(()=>{});
     } else {
       apply();run(1,0,duration).then(()=>{if(!finished)finishScene();}).catch(()=>{});
@@ -222,12 +223,12 @@
     $('end-hint').textContent = page === chapter.pages.length - 1 ? (current === chapters.length - 1 ? 'クリックでメニューへ' : 'クリックで読了') : '';
     playTrack(item.bgm);
   }
-  function start(index) {
+  function start(index, requestedPage = 0) {
     closeToolbar();
     finishScene(); sceneKey = null;
     // Chapter entry is a musical cue, even when the previous track is identical.
     playTrack(null);
-    current = index; page = 0;
+    current = index; page = Math.max(0, Math.min(chapters[index].pages.length - 1, Number.isInteger(requestedPage) ? requestedPage : 0));
     $('menu').hidden = true; $('reader').hidden = false; $('menu-button').hidden = false;
     $('game').classList.add('playing'); render(); $('next').focus();
   }
@@ -268,7 +269,7 @@
   const previewLocation = root.ALBUM_PREVIEW_LOCATION ? new URLSearchParams(root.ALBUM_PREVIEW_LOCATION) : typeof location !== 'undefined' && root.ALBUM_PREVIEW ? new URLSearchParams(location.hash.slice(1)) : null;
   if (previewLocation && previewLocation.has('chapter')) {
     const index = Number(previewLocation.get('chapter')), requestedPage = Number(previewLocation.get('page'));
-    if (Number.isInteger(index) && chapters[index]) { start(index); page = Math.max(0, Math.min(chapters[index].pages.length - 1, Number.isInteger(requestedPage) ? requestedPage : 0)); render(); }
+    if (Number.isInteger(index) && chapters[index]) start(index, requestedPage);
   }
   document.addEventListener('keydown', event => {
     if (current < 0 || $('next-dialog').open || /^(INPUT|BUTTON|SELECT|TEXTAREA)$/.test(event.target.tagName)) return;

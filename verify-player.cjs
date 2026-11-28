@@ -97,5 +97,16 @@ async function checkAnimations(){
  for(let i=0;i<6;i++)await Promise.resolve();
  assert.equal(el('menu').hidden,false);
  console.log('PASS: animated fades, black midpoint, unchanged backgrounds, rapid navigation cancellation and menu cleanup.');
+ // Chapter entry and the studio's exact-page preview fade from black once.
+ animated.chapters[0].pages[0].transition='fade';
+ animated.chapters[0].pages[0].transitionDuration=1200;
+ nodes.clear();const previousCount=active.length;
+ vm.runInNewContext(fs.readFileSync(require.resolve('./player.js'),'utf8'),{...animatedContext,window:{ALBUM_CONFIG:animated,ALBUM_PREVIEW_LOCATION:{chapter:'0',page:'0'}},URLSearchParams});
+ assert.equal(active.length,previousCount+2);
+ assert.equal(active.at(-1).frames[0].opacity,1);assert.equal(active.at(-1).frames[1].opacity,0);
+ assert.equal(active.at(-1).options.duration,1200);
+ assert.equal(el('reading-area').children.at(-1).style.background,'#000');
+ el('menu-button').click();assert.equal(el('menu').hidden,false);
+ console.log('PASS: chapter opening and exact-page preview fade from black with the configured duration.');
 }
 checkAnimations().catch(error=>{console.error(error);process.exitCode=1;});
