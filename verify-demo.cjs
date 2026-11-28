@@ -17,7 +17,7 @@ async function main(){
   const requests=[],downloads=[],frame={setAttribute(name,value){this[name]=value;}},nativeFetch=fetch;
   const nodes={preview:frame,save:{},build:{}};
   const browser={AlbumKit:require('./setup.js'),AlbumZip:{zip}};
-  const context={window:browser,TextEncoder,Uint8Array,Blob,URL,btoa,crypto:require('node:crypto').webcrypto,structuredClone,setTimeout(){},
+  const context={window:browser,TextEncoder,TextDecoder,Uint8Array,Blob,URL,btoa,crypto:require('node:crypto').webcrypto,structuredClone,setTimeout(){},
    document:{baseURI:'https://demo.test/album-kit/studio/',addEventListener(){},getElementById:id=>nodes[id],createElement:()=>({click(){downloads.push(this.href);}})},
    fetch:async url=>{const target=new URL(url);if(target.protocol==='blob:')return nativeFetch(target);requests.push({method:'GET',path:target.pathname});assert(target.pathname.startsWith('/album-kit/'));const full=path.join(root,decodeURIComponent(target.pathname.slice('/album-kit/'.length)));return new Response(fs.existsSync(full)?fs.readFileSync(full):'missing',{status:fs.existsSync(full)?200:404});}
   };
@@ -35,10 +35,12 @@ async function main(){
   vm.runInNewContext(/<script nonce="[^"]+">([\s\S]*?)<\/script>/.exec(frame.srcdoc)[1],previewContext);
   const previewURL=previewContext.window.ALBUM_CONFIG.chapters[0].pages[0].image;
   assert(previewURL.startsWith('blob:'));assert.equal(await(await nativeFetch(previewURL)).text(),'image-fixture');URL.revokeObjectURL(previewURL);
+  data.ogp={url:'https://example.com/album/',title:'Shared album',image:first.path};
   await adapter.request('/api/preview',data);await adapter.request('/api/save',data);await adapter.request('/api/build',data);assert.equal(downloads.length,2);
   const saved=unzip(await(await nativeFetch(downloads[0])).arrayBuffer()),published=unzip(await(await nativeFetch(downloads[1])).arrayBuffer());
   assert(saved.has('album.project.json'));assert(saved.has('album-kit/studio.cjs'));assert(published.has(first.path));assert(!published.has('album.project.json'));assert(!published.has('album-kit/studio.cjs'));assert(published.has('index.html'));
   assert.equal(JSON.parse(saved.get('album.project.json').toString()).title,data.title);
+  for(const files of [saved,published])assert(files.get('index.html').toString().includes('property="og:image" content="https://example.com/album/'+first.path+'"'));
   const serialized={window:{}};vm.runInNewContext(published.get('album.config.js').toString(),serialized);assert.equal(serialized.window.ALBUM_CONFIG.title,data.title);assert.equal(serialized.injected,undefined);
   const invalid={...data,cover:'../private.png'};await assert.rejects(()=>adapter.request('/api/build',invalid),/不正/);
   for(const file of ['album.config.js','index.html','album-kit/player.js','album-kit/hidden.png','%2e%2e/private.png','%252e%252e/private.png','https://example.com/a.png','//example.com/a.png','image/../../a.png']){

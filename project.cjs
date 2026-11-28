@@ -2,7 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const {validate} = require('./setup.js');
+const {validate,renderHTML} = require('./setup.js');
 const {parseScenario} = require('./player.js');
 const runtime = ['base.css','theme.css','template.js','setup.js','player.js'];
 function local(root, value) {
@@ -46,6 +46,7 @@ function assets(config) {
   const paths = new Set();
   const add = value => { if(value) paths.add(value); };
   add(config.cover);
+  add(config.ogp?.image);
   for (const track of config.tracks) add((config.audioBase || '')+track.file);
   for (const chapter of config.chapters) {
     add(chapter.image);
@@ -70,8 +71,7 @@ function build(root, config) {
   const output = local(root,'dist/'+name);
   fs.mkdirSync(path.join(output,'album-kit'),{recursive:true});
   for (const file of runtime) fs.copyFileSync(path.join(__dirname,file),path.join(output,'album-kit',file));
-  const escape = value => value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  const html = fs.readFileSync(path.join(__dirname,'starter.html'),'utf8').replace('<title>New Album</title>','<title>'+escape(config.title)+'</title>');
+  const html = renderHTML(fs.readFileSync(path.join(__dirname,'starter.html'),'utf8'),config);
   fs.writeFileSync(path.join(output,'index.html'),html);
   fs.copyFileSync(path.join(__dirname,'LICENSE'),path.join(output,'LICENSE'));
   fs.writeFileSync(path.join(output,'album.config.js'),'window.ALBUM_CONFIG = '+JSON.stringify(config,null,2)+';\n');

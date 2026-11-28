@@ -2,6 +2,15 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const {parseScenario}=require('./player.js');
 const {validate}=require('./setup.js');
+const {renderHTML}=require('./setup.js');
+const shared={id:'ogp',title:'Album',description:'Intro',tracks:[],chapters:[],cover:'image/cover.png',ogp:{url:'https://example.com/music/',title:'A "quote" <script>',description:'A&B',image:'image/share photo.jpg'}};
+const sharedHTML=renderHTML('<head><title>New Album</title></head>',shared);
+assert(sharedHTML.includes('content="https://example.com/music/image/share%20photo.jpg"'));
+assert(sharedHTML.includes('content="A &quot;quote&quot; &lt;script&gt;"'));
+assert(sharedHTML.includes('content="A&amp;B"'));assert(sharedHTML.includes('summary_large_image'));
+assert(!renderHTML('<head></head>',{...shared,ogp:{}}).includes('property="og:image"'));
+assert(renderHTML('<head></head>',{...shared,ogp:{url:'https://example.com/music/index.html'}}).includes('https://example.com/music/image/cover.png'));
+for(const ogp of [{url:'javascript:alert(1)'},{url:'https://user:secret@example.com/'},{image:'../share.png'},{image:'https://example.com/x.png'},{title:7}])assert.throws(()=>validate({...shared,ogp}));
 assert.deepEqual(parseScenario('#Artist\nFirst page.[p]\nSecond page.'),[{speaker:'Artist',text:'First page.',bgm:null,image:null},{speaker:'Artist',text:'Second page.',bgm:null,image:null}]);
 assert.equal(parseScenario('Artist\nNotes',['Artist'])[0].speaker,'Artist');
 assert.equal(parseScenario('[playbgm storage="song.mp3"]First[p][stopbgm]Second')[1].bgm,null);

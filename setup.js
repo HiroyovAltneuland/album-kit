@@ -16,6 +16,15 @@
   function validate(config, sources = {}) {
     if (!config || !/^[a-zA-Z0-9_-]+$/.test(config.id || '')) throw new Error('album.config.js: id は英数字・_・-で指定してください');
     if (typeof config.title !== 'string' || !config.title.trim()) throw new Error('アルバムの title が必要です');
+    if (config.ogp !== undefined) {
+      if (!config.ogp || typeof config.ogp !== 'object' || Array.isArray(config.ogp)) throw new Error('OGP設定が不正です');
+      for (const key of ['title','description','image','url']) if (config.ogp[key] !== undefined && typeof config.ogp[key] !== 'string') throw new Error('OGP設定は文字列で指定してください');
+      if (config.ogp.url) {
+        let url;try { url = new URL(config.ogp.url); } catch (_) { throw new Error('公開URLはhttps://などから始まる絶対URLで指定してください'); }
+        if (!['https:','http:'].includes(url.protocol) || url.username || url.password) throw new Error('公開URLは認証情報を含まないHTTP(S)のURLで指定してください');
+      }
+      if (config.ogp.image && (!/\.(png|jpe?g|webp|gif|avif)$/i.test(config.ogp.image) || /[%\\\x00-\x1f?#:]/.test(config.ogp.image) || config.ogp.image.startsWith('/') || config.ogp.image.split('/').some(p=>!p || p==='.' || p==='..'))) throw new Error('OGP画像はプロジェクト内の画像パスで指定してください');
+    }
     if (config.chapterUnit !== undefined && typeof config.chapterUnit !== 'string') throw new Error('シナリオの単位は文字列で指定してください');
     if (!Array.isArray(config.tracks) || !Array.isArray(config.chapters)) throw new Error('tracks と chapters は配列で指定してください');
     const files = new Set();
@@ -40,7 +49,18 @@
     if (config.font && !fonts[config.font]) throw new Error('不明な font: ' + config.font);
     return config;
   }
-  root.AlbumKit = { palettes, fonts, validate };
+  function renderHTML(html, config) {
+    validate(config);
+    const escape = value => String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    const ogp = config.ogp || {}, title = ogp.title || config.title, description = ogp.description || config.description || '';
+    const url = ogp.url ? new URL(ogp.url).href : '';
+    const image = url && (ogp.image || config.cover) ? new URL(ogp.image || config.cover, url).href : '';
+    const tags = [['property','og:type','website'],['property','og:title',title],['property','og:description',description],['property','og:url',url],['property','og:image',image],['name','description',description],['name','twitter:card',image?'summary_large_image':'summary'],['name','twitter:title',title],['name','twitter:description',description],['name','twitter:image',image]];
+    html = html.replace(/<title>[\s\S]*?<\/title>/i,()=>'<title>'+escape(config.title)+'</title>');
+    const meta = tags.filter(([, ,value])=>value).map(([attribute,key,value])=>'<meta '+attribute+'="'+key+'" content="'+escape(value)+'">').join('\n');
+    return html.replace('</head>',()=>meta+'\n</head>');
+  }
+  root.AlbumKit = { palettes, fonts, validate, renderHTML };
   if (typeof module !== 'undefined') module.exports = root.AlbumKit;
   if (typeof document === 'undefined' || root.ALBUM_STUDIO) return;
   const config = validate(root.ALBUM_CONFIG, root.SCENARIO_SOURCES);

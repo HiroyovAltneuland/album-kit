@@ -8,13 +8,14 @@ window.ALBUM_STUDIO=true;
  const safe=file=>typeof file==='string' && file && !/[%\\\x00-\x1f?#:]/.test(file) && !file.startsWith('/') && !file.split('/').some(p=>!p||p==='.'||p==='..') && !/^album-kit\//i.test(file) && /\.(png|jpe?g|webp|gif|avif|mp3|wav|ogg|m4a|aac|flac)$/i.test(file);
  function assetURL(file){if(!safe(file))throw new Error('素材にはプロジェクト内の相対パスを指定してください');return urls.get(file)||new URL(file,sample).href;}
  function check(data){window.AlbumKit.validate(data);for(const chapter of data.chapters){if(!chapter.pages)throw new Error('pages形式で指定してください');}for(const file of assets(data))if(!safe(file))throw new Error('不正な素材パスです');}
- function assets(data){const found=new Set();const add=p=>{if(p)found.add(p);};add(data.cover);for(const t of data.tracks)add((data.audioBase||'')+t.file);for(const c of data.chapters){add(c.image);for(const p of c.pages){if(p.image)add((data.imageBase||'')+p.image);if(p.bgm)add((data.audioBase||'')+p.bgm);}}return [...found];}
+ function assets(data){const found=new Set();const add=p=>{if(p)found.add(p);};add(data.cover);add(data.ogp?.image);for(const t of data.tracks)add((data.audioBase||'')+t.file);for(const c of data.chapters){add(c.image);for(const p of c.pages){if(p.image)add((data.imageBase||'')+p.image);if(p.bgm)add((data.audioBase||'')+p.bgm);}}return [...found];}
  async function bytes(url){const r=await fetch(url);if(!r.ok)throw new Error('ファイルを読み込めません: '+new URL(url).pathname);return new Uint8Array(await r.arrayBuffer());}
  function download(name,data,type){const url=URL.createObjectURL(new Blob([data],{type})),link=document.createElement('a');link.href=url;link.download=name;link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);}
  async function pack(data,editable){
   check(data);const entries=new Map(),manifest=await(await fetch(new URL('project-manifest.json',base))).json();
   const files=editable?manifest.files:['index.html','album-kit/base.css','album-kit/theme.css','album-kit/template.js','album-kit/setup.js','album-kit/player.js','album-kit/LICENSE'];
   for(const file of files)entries.set(file,await bytes(new URL(file,new URL('project/',base))));
+  entries.set('index.html',window.AlbumKit.renderHTML(new TextDecoder().decode(entries.get('index.html')),data));
   entries.set('album.config.js','window.ALBUM_CONFIG = '+JSON.stringify(data,null,2)+';\n');
   if(editable)entries.set('album.project.json',JSON.stringify(data,null,2)+'\n');
   entries.set('LICENSE',await bytes(new URL('LICENSE',base)));

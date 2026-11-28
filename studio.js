@@ -91,6 +91,13 @@ function render() {
     field(root,'紹介文',config.description,v=>config.description=v,{type:'textarea'});
     field(root,'シナリオの単位',config.chapterUnit || '',v=>config.chapterUnit=v,{hint:'未指定は「章」。例：幕、話、編。メニューの「全7章」「どの章からでも読めます」に使います'});
     imageField(root,'ジャケット・背景画像',config,'cover');
+    const ogp = config.ogp ||= {};
+    const share = element('details',{class:'group'});share.append(element('summary',{},'SNS共有・OGP設定'));
+    field(share,'公開URL',ogp.url,v=>ogp.url=v,{hint:'作品トップの完全なURL。例：https://example.com/album/（フォルダURLは末尾に /）。画像をSNSに表示するために必要です'});
+    field(share,'OGPタイトル',ogp.title,v=>ogp.title=v,{hint:'未指定は作品タイトル'});
+    field(share,'OGP説明文',ogp.description,v=>ogp.description=v,{type:'textarea',hint:'未指定は紹介文'});
+    imageField(share,'OGP画像',ogp,'image');
+    share.append(element('p',{class:'hint'},'画像未指定はジャケット画像。推奨1200×630pxのPNG/JPEG。ビルドしたHTMLに埋め込むため、変更後は再ビルド・再アップロードしてください。'));root.append(share);
   }
   if(tab==='tracks') {
     root.append(element('h2',{},'楽曲'),element('p',{},'曲順を整えて、右のプレイヤーで試聴'));
